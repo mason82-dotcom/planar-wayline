@@ -3,6 +3,7 @@
  * 日    期：2026/07/29
  */
 import * as Cesium from 'cesium';
+import { egm96ToEllipsoid } from 'egm96-universal';
 import globeConfig from '../config/planarConfig';
 import { LocalPoint, PlanarRouteSegment } from '../utils/wayLineCalc';
 import {
@@ -59,7 +60,11 @@ export async function resolveFlightHeight(viewer: Cesium.Viewer, frame: LocalCoo
 	}
 
 	const maximumTerrainHeight = await sampleMaximumTerrainHeight(viewer, frame, polygon);
-	let absoluteFlightHeight = lineHeight;
+	// 海拔高度（ASL）为 EGM96 高度；Cesium 与导出的 WGS84 executeHeight 使用椭球高，需加上大地水准面差距。
+	// ASL input is an EGM96 height; Cesium positions and the exported WGS84 executeHeight are
+	// ellipsoidal, so add the geoid undulation at the survey area (about +48 m in southern Germany).
+	const center = frame.toCartographic({ x: 0, y: 0 });
+	let absoluteFlightHeight = egm96ToEllipsoid(Cesium.Math.toDegrees(center.latitude), Cesium.Math.toDegrees(center.longitude), lineHeight);
 	if (Number(globeConfig.heightType) === 2) {
 		if (!globeConfig.flyPosition) {
 			throw new Error('请先设置参考起飞点');
