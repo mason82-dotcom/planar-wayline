@@ -72,7 +72,7 @@ export async function buildPlanarKmz(options: PlanarKmzExportOptions): Promise<B
 	const zip = new JSZip();
 	const folder = zip.folder('wpmz');
 	if (!folder) {
-		throw new Error('无法创建 KMZ 目录');
+		throw new Error('KMZ-Ordner konnte nicht angelegt werden');
 	}
 	folder.file('template.kml', buildTemplateKml(options));
 	folder.file('waylines.wpml', buildWaylinesWpml(options, routeData));
@@ -89,24 +89,24 @@ export async function buildPlanarKmz(options: PlanarKmzExportOptions): Promise<B
  */
 function validateExportOptions(options: PlanarKmzExportOptions): void {
 	if (options.polygonPositions.length < 3) {
-		throw new Error('请先绘制有效测区');
+		throw new Error('Bitte zuerst ein gültiges Messgebiet zeichnen');
 	}
 	const expectedRouteCount = options.isOblique ? 5 : 1;
 	if (options.routes.length !== expectedRouteCount) {
-		throw new Error(options.isOblique ? '倾斜摄影必须包含五组航线' : '正射摄影必须包含一组航线');
+		throw new Error(options.isOblique ? 'Eine Schrägaufnahme braucht fünf Routen' : 'Eine Nadir-Aufnahme braucht genau eine Route');
 	}
 	if (!Number.isFinite(options.flightSpeed) || options.flightSpeed <= 0) {
-		throw new Error('航线速度无效');
+		throw new Error('Ungültige Routengeschwindigkeit');
 	}
 	if (!Number.isFinite(options.photoDistance) || options.photoDistance <= 0) {
-		throw new Error('拍照间隔无效');
+		throw new Error('Ungültiges Fotointervall');
 	}
 	if (![1, 2, 3].includes(options.heightType)) {
-		throw new Error('航线高度模式无效');
+		throw new Error('Ungültiger Höhenbezug');
 	}
 	for (let routeIndex = 0; routeIndex < options.routes.length; routeIndex++) {
 		if (options.routes[routeIndex].segments.length === 0) {
-			throw new Error(`第 ${routeIndex + 1} 组航线没有有效航点`);
+			throw new Error(`Route ${routeIndex + 1} enthält keine gültigen Wegpunkte`);
 		}
 	}
 }
@@ -156,12 +156,12 @@ function createExportRouteData(route: PlanarKmzRoute, options: PlanarKmzExportOp
 	}
 
 	if (waypoints.length < 2) {
-		throw new Error(`第 ${route.id} 组航线至少需要两个航点`);
+		throw new Error(`Route ${route.id} braucht mindestens zwei Wegpunkte`);
 	}
 	const captureRanges = Array.from(captureRangeMap.values());
 	captureRanges.sort((left, right) => left.startIndex - right.startIndex);
 	if (captureRanges.length === 0) {
-		throw new Error(`第 ${route.id} 组航线没有有效拍摄区段`);
+		throw new Error(`Route ${route.id} enthält keinen gültigen Aufnahmeabschnitt`);
 	}
 	return {
 		id: route.id,
@@ -179,7 +179,7 @@ function createExportRouteData(route: PlanarKmzRoute, options: PlanarKmzExportOp
 function toExportWaypoint(position: Cesium.Cartesian3): ExportWaypoint {
 	const cartographic = Cesium.Cartographic.fromCartesian(position);
 	if (!cartographic) {
-		throw new Error('航点坐标转换失败');
+		throw new Error('Umrechnung der Wegpunktkoordinaten fehlgeschlagen');
 	}
 	return {
 		longitude: Cesium.Math.toDegrees(cartographic.longitude),
@@ -209,7 +209,7 @@ function getNormalizedPolygonPositions(positions: Cesium.Cartesian3[]): ExportWa
 	for (let positionIndex = 0; positionIndex < positions.length; positionIndex++) {
 		const point = toExportWaypoint(positions[positionIndex]);
 		if (point.longitude < -180 || point.longitude > 180 || point.latitude < -90 || point.latitude > 90) {
-			throw new Error('测区包含无效经纬度');
+			throw new Error('Das Messgebiet enthält ungültige Koordinaten');
 		}
 		const previous = polygon[polygon.length - 1];
 		if (!previous || !areSameCoordinates(previous, point)) {
@@ -220,7 +220,7 @@ function getNormalizedPolygonPositions(positions: Cesium.Cartesian3[]): ExportWa
 		polygon.pop();
 	}
 	if (polygon.length < 3) {
-		throw new Error('测区至少需要三个不同顶点');
+		throw new Error('Das Messgebiet braucht mindestens drei verschiedene Eckpunkte');
 	}
 	if (calculatePolygonSignedArea(polygon) > 0) {
 		polygon.reverse();
@@ -645,7 +645,7 @@ function serializeXml(xmlDocument: XMLDocument): string {
  */
 function formatNumber(value: number): string {
 	if (!Number.isFinite(value)) {
-		throw new Error('KMZ 中存在无效数值');
+		throw new Error('Die KMZ-Datei enthält ungültige Zahlenwerte');
 	}
 	return Number(value.toFixed(8)).toString();
 }

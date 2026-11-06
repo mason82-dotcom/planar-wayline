@@ -5,7 +5,7 @@
 <template>
 	<el-dialog
 		:model-value="modelValue"
-		title="保存航线"
+		title="Route speichern"
 		width="480px"
 		append-to-body
 		:close-on-click-modal="false"
@@ -17,22 +17,22 @@
 	>
 		<div class="airline-save-body">
 			<el-form ref="formRef" class="airline-save-form" :model="form" :rules="formRules" label-position="top" require-asterisk-position="right">
-				<el-form-item label="航线名称" prop="name">
+				<el-form-item label="Routenname" prop="name">
 					<el-input
 						v-model="form.name"
 						maxlength="100"
-						placeholder="请输入航线名称"
+						placeholder="Routenname eingeben"
 						@focus="keyBindingSwitch(false)"
 						@blur="keyBindingSwitch(true)"
 						@keyup.enter="confirmSave"
 					/>
 				</el-form-item>
 			</el-form>
-			<div class="airline-save-hint">将按上述名称下载 KMZ 文件到本地。</div>
+			<div class="airline-save-hint">Die Route wird unter diesem Namen als KMZ-Datei heruntergeladen.</div>
 		</div>
 		<template #footer>
-			<el-button class="cancel-btn" :disabled="isSaving" @click="closeDialog">取消</el-button>
-			<el-button type="primary" :loading="isSaving" @click="confirmSave">确定保存</el-button>
+			<el-button class="cancel-btn" :disabled="isSaving" @click="closeDialog">Abbrechen</el-button>
+			<el-button type="primary" :loading="isSaving" @click="confirmSave">Speichern</el-button>
 		</template>
 	</el-dialog>
 </template>

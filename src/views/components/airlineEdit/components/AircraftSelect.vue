@@ -5,28 +5,28 @@
 <template>
 	<div class="aircraftSelect_page">
 		<div class="box">
-			<div class="header">编辑</div>
+			<div class="header">Bearbeiten</div>
 			<div class="content">
-				<div class="title">选择飞行器</div>
+				<div class="title">Fluggerät wählen</div>
 				<div class="list_box">
 					<div class="item" :class="{ active: activeAircraft == item.id }" v-for="(item, index) in aircraftList" @click="changeAircraft(item)">
 						{{ item.name }}
 					</div>
 				</div>
 
-				<div class="title" style="margin-top: 20px">选择型号</div>
+				<div class="title" style="margin-top: 20px">Modell wählen</div>
 				<div class="list_box">
 					<div class="item" :class="{ active: activeModel == item.id }" v-for="(item, index) in modelList" @click="changeModel(item)">
 						{{ item.name }}
 					</div>
 				</div>
 
-				<div class="title" style="margin-top: 20px">航线名称</div>
-				<el-input @blur="keyBindingSwitch(true)" @focus="keyBindingSwitch(false)" v-model="aircraftName" placeholder="新建航点航线" />
+				<div class="title" style="margin-top: 20px">Routenname</div>
+				<el-input @blur="keyBindingSwitch(true)" @focus="keyBindingSwitch(false)" v-model="aircraftName" placeholder="Neue Wegpunktroute" />
 
 				<div style="text-align: right; margin-top: 40px">
-					<el-button type="info" @click="doClose" style="width: 96px">关闭</el-button>
-					<el-button type="primary" style="width: 96px" @click="handleSave" >确定</el-button>
+					<el-button type="info" @click="doClose" style="width: 96px">Schließen</el-button>
+					<el-button type="primary" style="width: 96px" @click="handleSave" >OK</el-button>
 				</div>
 			</div>
 		</div>

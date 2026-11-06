@@ -282,7 +282,7 @@ function decodeReachPointAction(func: string, params: Record<string, unknown>): 
 		const heading = Number(params.aircraftHeading);
 		if (Number.isNaN(heading)) return null;
 		return {
-			name: '飞行器偏航角',
+			name: 'Gierwinkel des Fluggeräts',
 			field: 'heading',
 			value: heading,
 			icon: 'action_phj',
@@ -295,7 +295,7 @@ function decodeReachPointAction(func: string, params: Record<string, unknown>): 
 		const pitch = Number(params.gimbalPitchRotateAngle);
 		if (Number.isNaN(pitch)) return null;
 		return {
-			name: '云台俯仰角',
+			name: 'Gimbal-Neigung',
 			field: 'ptzPitch',
 			value: pitch,
 			icon: 'action_fyj',
@@ -308,7 +308,7 @@ function decodeReachPointAction(func: string, params: Record<string, unknown>): 
 		const focalLength = Number(params.focalLength);
 		if (Number.isNaN(focalLength) || focalLength <= 0) return null;
 		return {
-			name: '相机变焦',
+			name: 'Kamerazoom',
 			field: 'ptz',
 			value: focalLength / 24,
 			icon: 'fangda',
@@ -321,9 +321,9 @@ function decodeReachPointAction(func: string, params: Record<string, unknown>): 
 		const hoverTime = Number(params.hoverTime);
 		if (Number.isNaN(hoverTime) || hoverTime <= 0) return null;
 		return {
-			name: '悬停',
+			name: 'Schweben',
 			field: 'isAirHover',
-			label: '悬停',
+			label: 'Schweben',
 			value: hoverTime,
 			min: 1,
 			max: 900,
@@ -333,7 +333,7 @@ function decodeReachPointAction(func: string, params: Record<string, unknown>): 
 	}
 	if (func === 'startRecord') {
 		return {
-			name: '开始录像',
+			name: 'Videoaufnahme starten',
 			field: 'isStartRecord',
 			icon: 'startRecording',
 			setting: payloadLensIndexToSetting(String(params.payloadLensIndex ?? '')),
@@ -341,7 +341,7 @@ function decodeReachPointAction(func: string, params: Record<string, unknown>): 
 	}
 	if (func === 'stopRecord') {
 		return {
-			name: '停止录像',
+			name: 'Videoaufnahme stoppen',
 			field: 'isEndRecord',
 			icon: 'endRecording',
 		};
@@ -349,7 +349,7 @@ function decodeReachPointAction(func: string, params: Record<string, unknown>): 
 	if (func === 'takePhoto' || func === 'orientedShoot') {
 		const isOriented = func === 'orientedShoot';
 		const item: UavActionItem = {
-			name: isOriented ? '定向拍照' : '拍照',
+			name: isOriented ? 'Gerichtetes Foto' : 'Foto',
 			field: isOriented ? 'F' : 'isSnapshot',
 			icon: isOriented ? 'takePictures' : 'snapshot',
 			setting: {
@@ -380,7 +380,7 @@ function decodeReachPointAction(func: string, params: Record<string, unknown>): 
 	}
 	if (func === 'panoShot') {
 		return {
-			name: '全景拍照',
+			name: 'Panoramafoto',
 			field: 'G',
 			icon: 'panoramicPhoto',
 		};
@@ -407,7 +407,7 @@ export function buildUavActionListFromTemplateWaypoint(waypoint: Record<string, 
 				const endIdx = Number(g?.actionGroupEndIndex);
 				if (Number.isNaN(endIdx) || endIdx !== waypointIndex) continue;
 				list.push({
-					name: '结束间隔拍照',
+					name: 'Intervallfotos beenden',
 					field: 'isEndIntervalPhoto',
 					icon: 'endIntervalPhoto',
 				});
@@ -428,7 +428,7 @@ export function buildUavActionListFromTemplateWaypoint(waypoint: Record<string, 
 				if (hasTakePhoto) {
 					const isTiming = triggerType === 'multipleTiming';
 					list.push({
-						name: isTiming ? '等时间隔拍照' : '等距间隔拍照',
+						name: isTiming ? 'Fotos nach Zeitintervall' : 'Fotos nach Abstand',
 						field: isTiming ? 'isIntervalPhoto' : 'isDistanceIntervalPhoto',
 						value: interval,
 						min: 1,

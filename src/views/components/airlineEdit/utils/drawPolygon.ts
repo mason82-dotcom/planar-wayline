@@ -44,7 +44,7 @@ export function drawPolygon(viewer, callback, cancelCallback: () => void): () =>
 		// 设置自定义光标样式
 		mapContainer.style.cursor = 'crosshair';
 	} else {
-		console.warn('未找到地图容器');
+		console.warn('Kartenbereich nicht gefunden');
 	}
 	// 外部复用地图时悬停在 canvas 上，需同步十字光标
 	viewer.canvas.style.cursor = 'crosshair';
@@ -96,9 +96,9 @@ export function drawPolygon(viewer, callback, cancelCallback: () => void): () =>
 		let cartographic = Cesium.Cartographic.fromCartesian(cartesian);
 		let lng = Cesium.Math.toDegrees(cartographic.longitude);
 		let lat = Cesium.Math.toDegrees(cartographic.latitude);
-		console.log(lng, '查看当前点击的经纬度信息', lat);
+		console.log(lng, 'Koordinaten des angeklickten Punkts', lat);
 		polygonPositions.push(cartesian);
-		console.log(polygonPositions, '查看当前点击的经纬度信息123');
+		console.log(polygonPositions, 'Koordinaten des angeklickten Punkts');
 		index++;
 		let pointEntity = drawDataSource.entities.add({
 			name: `polygonPoint`,
@@ -250,7 +250,7 @@ export function drawPolygon(viewer, callback, cancelCallback: () => void): () =>
 			drawDataSource.entities.add({
 				position: closingMetrics.middlePosition,
 				label: {
-					text: `${closingMetrics.distance.toFixed(2)}米`, // 显示的文本
+					text: `${closingMetrics.distance.toFixed(2)} m`, // 显示的文本
 					font: '16px sans-serif', // 字体
 					fillColor: Cesium.Color.WHITE, // 字体颜色
 					clampToGround: true,
@@ -291,12 +291,12 @@ export function drawPolygon(viewer, callback, cancelCallback: () => void): () =>
  */
 export function drawImportedPolygon(viewer: Cesium.Viewer, importedPositions: Cesium.Cartesian3[]): PolygonDrawingResult {
 	if (importedPositions.length < 3) {
-		throw new Error('导入测区至少需要三个顶点');
+		throw new Error('Ein importiertes Messgebiet braucht mindestens drei Eckpunkte');
 	}
 	const drawSources = viewer.dataSources.getByName('drawDataSource');
 	const dataSource = drawSources.at(-1);
 	if (!(dataSource instanceof Cesium.CustomDataSource)) {
-		throw new Error('测区数据源尚未初始化');
+		throw new Error('Messgebiet ist noch nicht bereit');
 	}
 
 	polygonPositions = [];
@@ -360,7 +360,7 @@ export function drawImportedPolygon(viewer: Cesium.Viewer, importedPositions: Ce
 			dataSource.entities.add({
 				position: metrics.middlePosition,
 				label: {
-					text: `${metrics.distance.toFixed(2)}米`,
+					text: `${metrics.distance.toFixed(2)} m`,
 					font: '16px sans-serif',
 					fillColor: Cesium.Color.WHITE,
 					outlineWidth: 2,
@@ -466,7 +466,7 @@ function updateDistanceLabel(labelEntity, start: Cesium.Cartesian3, end: Cesium.
 	}
 	const metrics = calculateEdgeMetrics(start, end);
 	labelEntity.position = new Cesium.ConstantPositionProperty(metrics.middlePosition);
-	labelEntity.label.text = `${metrics.distance.toFixed(2)}米`;
+	labelEntity.label.text = `${metrics.distance.toFixed(2)} m`;
 }
 
 /**
@@ -509,7 +509,7 @@ function iskinksBoolean() {
 	let polygon = turf.polygon([outPoint]);
 	let kinks = turf.kinks(polygon);
 
-	console.log('自相交', kinks.features.length);
+	console.log('Überschneidung', kinks.features.length);
 
 	isKinks = kinks.features.length > 0;
 

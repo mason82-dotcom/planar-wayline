@@ -100,16 +100,16 @@ export class Instance extends BaseInstance {
 	hasRoute = ref(false);
 	activeRouteIndex = ref(0);
 	routeSummaries = ref<RouteSummary[]>([]);
-	curWaylineType = ref('经纬 M30 T');
+	curWaylineType = ref('Matrice 30T');
 	photoTriggerOptions = [
-		{ label: '等时间拍照', value: 'time' },
-		{ label: '等距拍照', value: 'distance' },
+		{ label: 'Fotos nach Zeitintervall', value: 'time' },
+		{ label: 'Fotos nach Abstand', value: 'distance' },
 	];
 	entityObjPolygonObj: PolygonDrawingResult | null = null;
 	drawDataSource: Cesium.CustomDataSource | null = null;
 	isObliqueMode = computed(() => Number(globeConfig.climbType) === 2);
 	isImporting = ref(false);
-	mapLoadingText = computed(() => (this.isImporting.value ? '航线导入中' : '航线计算中'));
+	mapLoadingText = computed(() => (this.isImporting.value ? 'Route wird importiert …' : 'Route wird berechnet …'));
 	showSaveDialog = ref(false);
 	saveDialogDefaultName = ref('');
 	activeRouteSummary = computed<ActiveRouteSummary | null>(() => {
@@ -266,7 +266,7 @@ export class Instance extends BaseInstance {
 	 */
 	drawWay = (position?: Cesium.Cartesian3) => {
 		if (!position) {
-			ElMessage.error('未获取到参考起飞点');
+			ElMessage.error('Kein Referenz-Startpunkt gefunden');
 			return;
 		}
 
@@ -486,11 +486,11 @@ export class Instance extends BaseInstance {
 	 */
 	handleSave = () => {
 		if (!this.hasRoute.value) {
-			ElMessage.warning('请先完成航线规划');
+			ElMessage.warning('Bitte zuerst die Route planen');
 			return;
 		}
 		if (!globeConfig.flyPosition) {
-			ElMessage.warning('请先设置参考起飞点');
+			ElMessage.warning('Bitte zuerst den Referenz-Startpunkt setzen');
 			return;
 		}
 		this.openSaveDialog();
@@ -519,10 +519,10 @@ export class Instance extends BaseInstance {
 	private buildCurrentWaylineKmz = async (): Promise<Blob> => {
 		const polygonPositions = this.entityObjPolygonObj?.polygonPositions;
 		if (!polygonPositions || polygonPositions.length < 3 || this.plannedRoutes.length === 0 || !this.hasRoute.value) {
-			throw new Error('请先完成测区和航线规划');
+			throw new Error('Bitte zuerst Messgebiet und Route planen');
 		}
 		if (!globeConfig.flyPosition) {
-			throw new Error('请先设置参考起飞点');
+			throw new Error('Bitte zuerst den Referenz-Startpunkt setzen');
 		}
 
 		const routes: PlanarKmzRoute[] = [];
@@ -581,7 +581,7 @@ export class Instance extends BaseInstance {
 
 			const minimumGroundClearance = heightResult.minimumGroundClearance;
 			if (minimumGroundClearance <= 0) {
-				throw new Error('航线高度不足，无法规划');
+				throw new Error('Flughöhe zu gering, Route kann nicht geplant werden');
 			}
 
 			const cameraFieldOfView = calculateCameraFieldOfView(M3TD_WIDE_CAMERA);
@@ -629,7 +629,7 @@ export class Instance extends BaseInstance {
 					{
 						id: 1,
 						key: 'nadir',
-						label: '俯拍',
+						label: 'Nadir',
 						gimbalPitchDegrees: -90,
 						segments: plan.segments,
 					},
@@ -652,7 +652,7 @@ export class Instance extends BaseInstance {
 					return;
 				}
 				if (!Number.isFinite(heightResult.absoluteFlightHeight) || heightResult.absoluteFlightHeight! <= maximumRouteTerrainHeight) {
-					throw new Error('实际航迹下方地形过高，当前高度无法安全规划');
+					throw new Error('Das Gelände unter der Route ist zu hoch – mit dieser Flughöhe ist keine sichere Planung möglich');
 				}
 			}
 
@@ -688,7 +688,7 @@ export class Instance extends BaseInstance {
 						}
 						const firstWaypointCartographic = Cesium.Cartographic.fromCartesian(firstCartesianWaypoint);
 						if (!firstWaypointCartographic || firstWaypointCartographic.height <= maximumEntryTerrainHeight) {
-							throw new Error('起飞点到首航点之间地形过高，无法等高飞行');
+							throw new Error('Zwischen Startpunkt und erstem Wegpunkt ist das Gelände zu hoch für einen Flug in gleichbleibender Höhe');
 						}
 					}
 				}
@@ -711,7 +711,7 @@ export class Instance extends BaseInstance {
 				});
 			}
 			if (plannedRoutes.length === 0) {
-				throw new Error('当前测区未生成有效航线');
+				throw new Error('Für dieses Messgebiet wurde keine gültige Route erzeugt');
 			}
 
 			this.applyPlannedRoutes(plannedRoutes, photoDistance);
@@ -732,7 +732,7 @@ export class Instance extends BaseInstance {
 			this.photoDistance = 0;
 			this.routeSummaries.value = [];
 			this.hasRoute.value = false;
-			const message = error instanceof Error ? error.message : '航线规划失败';
+			const message = error instanceof Error ? error.message : 'Routenplanung fehlgeschlagen';
 			ElMessage.error(message);
 		} finally {
 			if (version === this.routeCalculationVersion) {
@@ -746,7 +746,7 @@ export class Instance extends BaseInstance {
 	 */
 	private applyPlannedRoutes(plannedRoutes: PlannedRouteData[], photoDistance: number): void {
 		if (plannedRoutes.length === 0) {
-			throw new Error('当前测区未生成有效航线');
+			throw new Error('Für dieses Messgebiet wurde keine gültige Route erzeugt');
 		}
 		this.plannedRoutes = plannedRoutes;
 		this.photoDistance = photoDistance;

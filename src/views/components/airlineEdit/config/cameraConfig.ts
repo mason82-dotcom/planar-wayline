@@ -30,10 +30,10 @@ export const M3TD_WIDE_CAMERA: CameraPhotoSpecification = {
  */
 export function calculateCameraFieldOfView(specification: CameraPhotoSpecification): CameraFieldOfView {
 	if (specification.diagonalFovDegrees <= 0 || specification.diagonalFovDegrees >= 180) {
-		throw new Error('相机对角视场角无效');
+		throw new Error('Ungültiger diagonaler Bildwinkel der Kamera');
 	}
 	if (specification.photoWidthPixels <= 0 || specification.photoHeightPixels <= 0) {
-		throw new Error('相机照片尺寸无效');
+		throw new Error('Ungültige Fotogröße der Kamera');
 	}
 
 	const diagonalPixels = Math.hypot(specification.photoWidthPixels, specification.photoHeightPixels);

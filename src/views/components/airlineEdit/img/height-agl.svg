@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="238" height="126" viewBox="0 0 238 126" role="img" aria-label="Höhe über Gelände (AGL)">
+  <title>Höhe über Gelände (AGL)</title>
+  <path d="M14 98 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0 q1.5 -1.6 3 0 q1.5 1.6 3 0" fill="none" stroke="#fff" stroke-width="1.2"/>
+  <path d="M24 96 C44 93 70 92 82 93 C88 88 92 86 96 92 C104 80 114 82 120 88 C126 90 130 70 138 68 C146 70 148 88 154 92 C162 95 176 95 200 96" fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/>
+  <text x="14" y="118" fill="#f0a020" font-size="9.5" font-family="Inter, Helvetica, Arial, sans-serif" text-anchor="start"><tspan x="14" dy="0">Meeresspiegel</tspan></text>
+  <path d="M27 6 h16 l-8 13 z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+  <line x1="44" y1="12" x2="101" y2="12" stroke="#fff" stroke-width="1.4" stroke-dasharray="1.5 3" stroke-linecap="round"/>
+  <line x1="101.8" y1="5.8" x2="114.2" y2="18.2" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="101.8" y1="18.2" x2="114.2" y2="5.8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="101.8" cy="5.8" r="4.2" fill="none" stroke="#fff" stroke-width="1.6"/>
+  <circle cx="114.2" cy="5.8" r="4.2" fill="none" stroke="#fff" stroke-width="1.6"/>
+  <circle cx="101.8" cy="18.2" r="4.2" fill="none" stroke="#fff" stroke-width="1.6"/>
+  <circle cx="114.2" cy="18.2" r="4.2" fill="none" stroke="#fff" stroke-width="1.6"/>
+  <circle cx="108" cy="12" r="2.4" fill="#fff"/>
+  <line x1="108" y1="22" x2="108" y2="80" stroke="#fff" stroke-width="1.4" stroke-dasharray="1.5 3" stroke-linecap="round"/>
+  <ellipse cx="138" cy="64" rx="8" ry="3.6" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M138 53 l3.5 4 h-2 v3 h-3 v-3 h-2 z" fill="#fff"/>
+  <text x="64" y="84" fill="#f0a020" font-size="9.5" font-family="Inter, Helvetica, Arial, sans-serif" text-anchor="start"><tspan x="64" dy="0">Gelände</tspan></text>
+  <line x1="114" y1="12" x2="126" y2="12" stroke="#1ee08a" stroke-width="1.6"/><line x1="114" y1="84" x2="126" y2="84" stroke="#1ee08a" stroke-width="1.6"/><line x1="120" y1="18" x2="120" y2="78" stroke="#1ee08a" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M120 13 l-4 6 h8 z M120 83 l-4 -6 h8 z" fill="#1ee08a"/>
+  <text x="170" y="30" fill="#fff" font-size="10.5" font-family="Inter, Helvetica, Arial, sans-serif" text-anchor="start"><tspan x="170" dy="0">Höhe über</tspan><tspan x="170" dy="12.5">Gelände</tspan><tspan x="170" dy="12.5">(AGL)</tspan></text>
+</svg>

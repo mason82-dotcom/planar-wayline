@@ -217,7 +217,7 @@ export function downloadJSONEnhanced(options) {
 
 	// 验证参数
 	if (!data || typeof data !== 'object') {
-		const error = new Error('data参数必须是一个对象');
+		const error = new Error('Der Parameter „data“ muss ein Objekt sein');
 		onError?.(error);
 		return false;
 	}
@@ -260,7 +260,7 @@ export function downloadJSONEnhanced(options) {
 		onSuccess?.(finalFilename);
 		return true;
 	} catch (error) {
-		console.error('下载JSON文件失败:', error);
+		console.error('Herunterladen der JSON-Datei fehlgeschlagen:', error);
 		onError?.(error);
 		return false;
 	}

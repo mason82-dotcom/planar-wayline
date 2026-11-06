@@ -68,23 +68,23 @@ export class Instance extends BaseInstance {
 	aircraftList = ref<any>([
 		{
 			id: 67,
-			name: '经纬 M30 系列',
+			name: 'Matrice 30-Serie',
 		},
 		{
 			id: 77,
-			name: 'Mavic 3 行业系列',
+			name: 'Mavic 3 Enterprise-Serie',
 		},
 		{
 			id: 91,
-			name: 'Matrice 3D 系列',
+			name: 'Matrice 3D-Serie',
 		},
 		{
 			id: 99,
-			name: 'Matrice 4 行业系列',
+			name: 'Matrice 4 Enterprise-Serie',
 		},
 		{
 			id: 100,
-			name: 'Matrice 4D 系列',
+			name: 'Matrice 4D-Serie',
 		},
 	]);
 
@@ -92,16 +92,16 @@ export class Instance extends BaseInstance {
 	modelList = ref<any>([
 		{
 			id: 1,
-			name: '经纬 M30',
+			name: 'Matrice 30',
 		},
 		{
 			id: 2,
-			name: '经纬 M30 T',
+			name: 'Matrice 30T',
 		},
 	]);
 
 
-	aircraftName = ref('新建航线')
+	aircraftName = ref('Neue Route')
 
 	// 私有方法 | private 方法名() {}
 

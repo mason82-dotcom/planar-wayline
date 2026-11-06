@@ -51,7 +51,7 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
  */
 export function calculateFiveDirectionRoutes(options: FiveDirectionRouteOptions): FiveDirectionRouteResult {
 	if (!Number.isFinite(options.gimbalPitchDegrees) || options.gimbalPitchDegrees < -85 || options.gimbalPitchDegrees > -40) {
-		throw new Error('倾斜摄影云台俯仰角必须在 -85° 到 -40°之间');
+		throw new Error('Die Gimbal-Neigung für Schrägaufnahmen muss zwischen -85° und -40° liegen');
 	}
 	const pitchRadians = (Math.abs(options.gimbalPitchDegrees) * Math.PI) / 180;
 	const horizontalOffset = options.minimumGroundClearance / Math.tan(pitchRadians);

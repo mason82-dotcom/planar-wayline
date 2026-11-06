@@ -314,7 +314,7 @@ export const drawKmzPolyline = (viewer: Cesium.Viewer, kmzData: any, cb) => {
 		const width = Number(pm?.Style?.LineStyle?.width) || Number(pm?.OvStyle?.TrackStyle?.width) || 4;
 
 		const entity = viewer.entities.add({
-			name: pm?.name || kmzData?.name || '导入管线',
+			name: pm?.name || kmzData?.name || 'Importierte Leitung',
 			polyline: {
 				positions,
 				width,
@@ -358,7 +358,7 @@ export function addMouseOverEvent(viewer: Cesium.Viewer, type: Cesium.ScreenSpac
 				const entity = pickedObject.id;
 				if (entity.billboard && entity._name === 'point') {
 					document.body.style.cursor = 'move';
-					console.log('鼠标悬停在 Billboard 上');
+					console.log('Mauszeiger über Symbol');
 				}
 			} else {
 				document.body.style.cursor = 'default';

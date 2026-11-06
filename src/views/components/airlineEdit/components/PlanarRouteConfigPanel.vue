@@ -4,7 +4,7 @@
 -->
 <template>
 	<div class="config-box">
-		<div class="wayline-title__name">面状航线</div>
+		<div class="wayline-title__name">Flächenroute</div>
 		<div class="wayline-title__param">
 			<div class="param-option">
 				<Icon icon="svg-icon:mianji" color="#fff" :size="20" />
@@ -28,53 +28,53 @@
 				<div class="scrollbar-container">
 					<el-tooltip popper-class="infoModel" placement="right" :offset="16">
 						<div v-if="globeConfig.isSetTakeoffPoint" class="base-box takeoff-box">
-							<div>已设置参考起飞点</div>
+							<div>Referenz-Startpunkt gesetzt</div>
 							<div class="setTakeoffPoint">
 								<Icon icon="svg-icon:takeoffPoint" color="#2d8cf0" />
-								<p class="takeoff-action" @click="updateFlyPoint">{{ flyPointStatus ? '取消设置' : '重设起飞点' }}</p>
+								<p class="takeoff-action" @click="updateFlyPoint">{{ flyPointStatus ? 'Zurücksetzen' : 'Startpunkt neu setzen' }}</p>
 							</div>
 						</div>
-						<div v-else class="base-box noSetTakeoffPoint">
+						<div v-else class="base-box noSetTakeoffPoint" role="button" tabindex="0" @click="updateFlyPoint" @keydown.enter="updateFlyPoint">
 							<Icon icon="svg-icon:takeoffPoint" color="#fff" />
-							<p class="takeoff-tip">参考起飞点未设置</p>
+							<p class="takeoff-tip">{{ flyPointStatus ? 'In die Karte klicken …' : 'Referenz-Startpunkt setzen' }}</p>
 						</div>
 						<template #content>
-							<p>"起飞点"仅做航线规划参考，飞机执行航线时以飞机真实的起飞点为准。</p>
+							<p>Der Referenz-Startpunkt dient nur der Planung. Beim Flug zählt der tatsächliche Startpunkt der Drohne.</p>
 						</template>
 					</el-tooltip>
 
 					<div class="base-box">
-						<div>拍照设置</div>
+						<div>Kamera</div>
 						<div class="button-box">
-							<el-button type="primary" round class="btn-item">广角</el-button>
-							<el-button round disabled>红外</el-button>
+							<el-button type="primary" round class="btn-item">Weitwinkel</el-button>
+							<el-button round disabled>Infrarot</el-button>
 						</div>
 					</div>
 
 					<div class="base-box">
-						<div>采集方式</div>
+						<div>Aufnahmeart</div>
 						<el-button-group class="full-width">
-							<el-button :color="globeConfig.climbType == 1 ? '#409eff' : '#3c3c3c'" class="half-btn" @click="updateClimbType(1)">正射采集</el-button>
-							<el-button :color="globeConfig.climbType != 1 ? '#409eff' : '#3c3c3c'" class="half-btn" @click="updateClimbType(2)">倾斜采集</el-button>
+							<el-button :color="globeConfig.climbType == 1 ? '#409eff' : '#3c3c3c'" class="half-btn" @click="updateClimbType(1)">Nadir (Orthofoto)</el-button>
+							<el-button :color="globeConfig.climbType != 1 ? '#409eff' : '#3c3c3c'" class="half-btn" @click="updateClimbType(2)">Schräg (5 Richtungen)</el-button>
 						</el-button-group>
 					</div>
 
 					<el-tooltip popper-class="infoModel" placement="right" :offset="16">
 						<div class="base-box">
-							<div>航线高度模式</div>
+							<div>Höhenbezug</div>
 							<el-button-group class="height-type-group">
-								<el-button :color="globeConfig.heightType == 1 ? '#409eff' : '#3c3c3c'" class="third-btn" @click="updateHeightType(1)">海拔高度</el-button>
+								<el-button :color="globeConfig.heightType == 1 ? '#409eff' : '#3c3c3c'" class="third-btn" @click="updateHeightType(1)">Über Meer</el-button>
 								<el-button :color="globeConfig.heightType == 2 ? '#409eff' : '#3c3c3c'" class="third-btn" :disabled="!globeConfig.isSetTakeoffPoint" @click="updateHeightType(2)"
-									>相对起飞点高度</el-button
+									>Über Startpunkt</el-button
 								>
-								<el-button :color="globeConfig.heightType == 3 ? '#409eff' : '#3c3c3c'" class="third-btn" @click="updateHeightType(3)">相对地形高度</el-button>
+								<el-button :color="globeConfig.heightType == 3 ? '#409eff' : '#3c3c3c'" class="third-btn" @click="updateHeightType(3)">Über Gelände</el-button>
 							</el-button-group>
 
 							<div class="flyset-box">
 								<div class="height-image-box">
-									<img v-if="globeConfig.heightType == 1" src="../img/flyHeight1.svg" alt="" class="height-image" />
-									<img v-if="globeConfig.heightType == 3" src="../img/flyHeight2.png" alt="" class="height-image" />
-									<img v-if="globeConfig.heightType == 2" src="../img/flyHeight.png" alt="" class="height-image" />
+									<img v-if="globeConfig.heightType == 1" src="../img/height-asl.svg" alt="Skizze: Höhe über Meer" class="height-image" />
+									<img v-if="globeConfig.heightType == 3" src="../img/height-agl.svg" alt="Skizze: Höhe über Gelände" class="height-image" />
+									<img v-if="globeConfig.heightType == 2" src="../img/height-alt.svg" alt="Skizze: Höhe über Startpunkt" class="height-image" />
 								</div>
 								<div class="right-box">
 									<el-button :disabled="globeConfig.lineHeight >= 1500" color="#3c3c3c" class="height-step-btn" @click="calclineHeight(100)">+100</el-button>
@@ -90,15 +90,15 @@
 							</div>
 						</div>
 						<template #content>
-							<p v-if="globeConfig.heightType == 1">海拔高度：航点高度值相对于海平面高度保持不变。</p>
-							<p v-else-if="globeConfig.heightType == 2">相对起飞点高度（ALT）：航点高度值相对起飞点的高度保持不变。</p>
-							<p v-else>相对地形的高度（AGL）：航点高度值相对地形/模型高度保持不变。</p>
+							<p v-if="globeConfig.heightType == 1">Höhe über Meer (ASL, EGM96): Alle Wegpunkte liegen auf derselben Höhe über dem Meeresspiegel.</p>
+							<p v-else-if="globeConfig.heightType == 2">Höhe über Startpunkt (ALT): Alle Wegpunkte liegen auf derselben Höhe über dem Startpunkt.</p>
+							<p v-else>Höhe über Gelände (AGL): Die Wegpunkte folgen dem Gelände und halten überall denselben Abstand zum Boden.</p>
 						</template>
 					</el-tooltip>
 
 					<div v-if="isObliqueMode" class="base-box gimbal-pitch-box">
 						<div class="gimbal-pitch-header">
-							<div>云台俯仰角</div>
+							<div>Gimbal-Neigung</div>
 							<div class="gimbal-pitch-value">
 								<span class="gimbal-pitch-num">{{ globeConfig.smartObliqueGimbalPitch }}</span>
 								<span>°</span>
@@ -122,7 +122,7 @@
 					</div>
 
 					<div class="base-box">
-						<div>全局航线速度</div>
+						<div>Routengeschwindigkeit</div>
 						<div class="flight-speed-row">
 							<el-button :disabled="Number(globeConfig.speed) <= 1" color="#3c3c3c" icon="Minus" class="flight-speed-btn" @click="changeFlightSpeed(-1)"></el-button>
 							<div class="flight-speed-value">
@@ -132,12 +132,12 @@
 							</div>
 							<el-button :disabled="isFlightSpeedAtHardMax" color="#3c3c3c" icon="Plus" class="flight-speed-btn" @click="changeFlightSpeed(1)"></el-button>
 						</div>
-						<div class="flight-speed-hint">建议 {{ flightSpeedSuggested }} m/s（可调至 15）</div>
+						<div class="flight-speed-hint">Empfohlen {{ flightSpeedSuggested }} m/s (bis 15 möglich)</div>
 					</div>
 
 					<div class="base-box gimbal-pitch-box">
 						<div class="gimbal-pitch-header">
-							<div>主航线角度</div>
+							<div>Ausrichtung der Fluglinien</div>
 							<div class="gimbal-pitch-value">
 								<span class="gimbal-pitch-num">{{ Number(globeConfig.lineAngle).toFixed(1) }}</span>
 								<span>°</span>
@@ -165,14 +165,14 @@
 						<el-collapse @change="collapseChange">
 							<el-collapse-item name="1">
 								<template #title>
-									<div class="advanced-title">高级设置</div>
+									<div class="advanced-title">Erweiterte Einstellungen</div>
 								</template>
 								<template #icon="{ isActive }">
 									<el-icon v-if="!isActive" size="18"><ArrowDownBold /></el-icon>
 									<el-icon v-else size="18"><ArrowUpBold /></el-icon>
 								</template>
 								<template #default>
-									<div>拍照触发模式</div>
+									<div>Auslösung</div>
 									<el-select
 										v-model="globeConfig.photoTriggerMode"
 										class="photo-trigger-select"
@@ -183,7 +183,7 @@
 										<el-option v-for="item in photoTriggerOptions" :key="item.value" :label="item.label" :value="item.value" />
 									</el-select>
 
-									<div>起飞速度</div>
+									<div>Anfluggeschwindigkeit</div>
 									<div class="speed-row">
 										<el-button :disabled="globeConfig.takeoffSpeed <= 1" color="#3c3c3c" icon="Minus" class="speed-btn" @click="changeTakeoffSpeed(-1)"></el-button>
 										<div class="speed-value">
@@ -203,7 +203,7 @@
 										<el-button :disabled="globeConfig.takeoffSpeed >= 15" color="#3c3c3c" icon="Plus" class="speed-btn" @click="changeTakeoffSpeed(1)"></el-button>
 									</div>
 
-									<div class="smalTitle">旁向重叠率</div>
+									<div class="smalTitle">Querüberlappung</div>
 									<div class="overlap-row">
 										<el-button color="#3c3c3c" class="overlap-btn" :disabled="globeConfig.overlapW <= 10" @click="changeOverlap('overlapW', -10)">-10</el-button>
 										<el-button color="#3c3c3c" class="overlap-btn" :disabled="globeConfig.overlapW <= 10" @click="changeOverlap('overlapW', -5)">-5</el-button>
@@ -217,7 +217,7 @@
 										<el-button color="#3c3c3c" class="overlap-btn" :disabled="globeConfig.overlapW >= 90" @click="changeOverlap('overlapW', 10)">+10</el-button>
 									</div>
 
-									<div class="smalTitle">航向重叠率</div>
+									<div class="smalTitle">Längsüberlappung</div>
 									<div class="overlap-row">
 										<el-button color="#3c3c3c" class="overlap-btn" :disabled="globeConfig.overlapH <= 10" @click="changeOverlap('overlapH', -10)">-10</el-button>
 										<el-button color="#3c3c3c" class="overlap-btn" :disabled="globeConfig.overlapH <= 10" @click="changeOverlap('overlapH', -5)">-5</el-button>
@@ -341,6 +341,7 @@
 }
 
 .noSetTakeoffPoint {
+	cursor: pointer;
 	height: 52px;
 	background: #2d8cf0;
 	display: flex;

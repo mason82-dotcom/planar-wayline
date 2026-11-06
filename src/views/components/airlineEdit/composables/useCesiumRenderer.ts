@@ -61,7 +61,7 @@ export class RouteRenderer {
 			this.routeEntityIds.push(id);
 			dataSource.entities.add({
 				id,
-				name: segment.type === 'scan' ? '拍摄航段' : '转场航段',
+				name: segment.type === 'scan' ? 'Aufnahmeabschnitt' : 'Überführungsabschnitt',
 				polyline: {
 					positions: segment.positions,
 					width: 2,

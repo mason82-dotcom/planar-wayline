@@ -69,11 +69,11 @@ export class Instance extends BaseInstance {
 	/** 表单校验规则 */
 	formRules: FormRules<AirlineSaveFormData> = {
 		name: [
-			{ required: true, whitespace: true, message: '航线名称不能为空', trigger: 'blur' },
+			{ required: true, whitespace: true, message: 'Bitte einen Routennamen eingeben', trigger: 'blur' },
 			{
 				validator: (_rule, value, callback) => {
 					if (!value || !String(value).trim()) {
-						callback(new Error('航线名称不能为空'));
+						callback(new Error('Bitte einen Routennamen eingeben'));
 						return;
 					}
 					callback();
@@ -118,7 +118,7 @@ export class Instance extends BaseInstance {
 	 * 打开时重置表单
 	 */
 	private resetForm() {
-		this.form.name = this.props.defaultName || '新建面状航线';
+		this.form.name = this.props.defaultName || 'Neue Flächenroute';
 	}
 
 	/**
@@ -179,14 +179,14 @@ export class Instance extends BaseInstance {
 		if (!valid) return;
 		const name = this.form.name.trim();
 		if (!name) {
-			ElMessage.warning('航线名称不能为空');
+			ElMessage.warning('Bitte einen Routennamen eingeben');
 			this.formRef.value?.validateField('name');
 			return;
 		}
 		this.isSaving.value = true;
 		try {
 			await this.props.exportDownload?.(name);
-			ElMessage.success('保存成功');
+			ElMessage.success('Gespeichert');
 			this.ctx.emit('update:modelValue', false);
 			this.ctx.emit('success', { name });
 		} catch (e) {

@@ -38,13 +38,13 @@ export interface RouteHeightOptions {
  */
 export function createLocalCoordinateFrame(positions: Cesium.Cartesian3[]): LocalCoordinateFrame {
 	if (positions.length < 3) {
-		throw new Error('测区至少需要 3 个顶点');
+		throw new Error('Das Messgebiet braucht mindestens 3 Eckpunkte');
 	}
 
 	const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
 	const origin = Cesium.Ellipsoid.WGS84.scaleToGeodeticSurface(boundingSphere.center, new Cesium.Cartesian3());
 	if (!origin) {
-		throw new Error('无法建立测区局部坐标系');
+		throw new Error('Lokales Koordinatensystem für das Messgebiet konnte nicht erstellt werden');
 	}
 
 	const localToFixed = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
@@ -60,7 +60,7 @@ export function createLocalCoordinateFrame(positions: Cesium.Cartesian3[]): Loca
 			const fixed = Cesium.Matrix4.multiplyByPoint(localToFixed, local, new Cesium.Cartesian3());
 			const cartographic = Cesium.Cartographic.fromCartesian(fixed);
 			if (!cartographic) {
-				throw new Error('局部坐标转换失败');
+				throw new Error('Umrechnung lokaler Koordinaten fehlgeschlagen');
 			}
 			return cartographic;
 		},
@@ -87,7 +87,7 @@ export async function sampleMaximumTerrainHeight(viewer: Cesium.Viewer, frame: L
 		maximumHeight = Math.max(maximumHeight, heights[index]);
 	}
 	if (!Number.isFinite(maximumHeight)) {
-		throw new Error('测区地形高度无效');
+		throw new Error('Ungültige Geländehöhe im Messgebiet');
 	}
 	return maximumHeight;
 }
@@ -104,7 +104,7 @@ export async function sampleMaximumTerrainHeightAlongSegments(viewer: Cesium.Vie
 		}
 	}
 	if (cartographics.length === 0) {
-		throw new Error('航线缺少地形采样点');
+		throw new Error('Für die Route fehlen Geländehöhen');
 	}
 
 	const heights = await sampleTerrainHeights(viewer, cartographics);
@@ -113,7 +113,7 @@ export async function sampleMaximumTerrainHeightAlongSegments(viewer: Cesium.Vie
 		maximumHeight = Math.max(maximumHeight, heights[index]);
 	}
 	if (!Number.isFinite(maximumHeight)) {
-		throw new Error('航线地形高度无效');
+		throw new Error('Ungültige Geländehöhe entlang der Route');
 	}
 	return maximumHeight;
 }
@@ -146,7 +146,7 @@ export async function createCartesianRouteSegments(
 	}
 
 	if (!Number.isFinite(options.absoluteFlightHeight)) {
-		throw new Error('航线绝对高度无效');
+		throw new Error('Ungültige absolute Flughöhe');
 	}
 
 	const result: CartesianRouteSegment[] = [];
@@ -182,7 +182,7 @@ async function sampleTerrainHeights(viewer: Cesium.Viewer, positions: Cesium.Car
 	const globe = viewer.scene.globe;
 	const provider = globe.terrainProvider;
 	if (provider instanceof Cesium.EllipsoidTerrainProvider) {
-		throw new Error('当前地图未加载地形数据');
+		throw new Error('Die Karte hat noch keine Geländedaten geladen');
 	}
 
 	const heights: number[] = [];
@@ -208,7 +208,7 @@ async function sampleTerrainHeights(viewer: Cesium.Viewer, positions: Cesium.Car
 			const cachedHeight = globe.getHeight(batch[index]);
 			const height = Number.isFinite(sampledHeight) ? sampledHeight : cachedHeight;
 			if (!Number.isFinite(height)) {
-				throw new Error('当前 Cesium 地形未返回有效高度');
+				throw new Error('Das Geländemodell lieferte keine gültige Höhe');
 			}
 			heights.push(height as number);
 		}
