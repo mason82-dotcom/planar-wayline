@@ -5,7 +5,8 @@
 import * as Cesium from 'cesium';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Ref } from 'vue';
-import { calculateCameraFieldOfView, M3TD_WIDE_CAMERA } from '../config/cameraConfig';
+import { calculateCameraFieldOfView } from '../config/cameraConfig';
+import { findAircraftProfile, getAircraftProfile, missionSettings, sanitizeMissionSettings, selectedCamera } from '../config/aircraftConfig';
 import globeConfig, { calculateMaxFlightSpeed, PLANAR_EDIT_DEFAULTS, PLANAR_SPEED_HARD_MAX } from '../config/planarConfig';
 import { drawImportedPolygon, PolygonDrawingResult } from '../utils/drawPolygon';
 import { drawFlyStartLine } from '../utils/planarLine';
@@ -189,9 +190,31 @@ export class KmzImportHandler {
 	}
 
 	/**
+	 * Fluggerät und Sicherheitseinstellungen aus der Datei übernehmen; fehlende Werte bleiben wie eingestellt.
+	 */
+	private applyImportedMissionSettings(imported: PlanarKmzImportResult, warnings: string[]): void {
+		const aircraft = findAircraftProfile(imported.droneEnumValue, imported.droneSubEnumValue, imported.payloadEnumValue);
+		if (aircraft) {
+			missionSettings.aircraftKey = aircraft.key;
+		} else if (imported.droneEnumValue !== undefined) {
+			const current = getAircraftProfile(missionSettings.aircraftKey).name;
+			warnings.push(`Unbekanntes Fluggerät ${imported.droneEnumValue}-${imported.droneSubEnumValue ?? 0} (Kamera ${imported.payloadEnumValue ?? '?'}) – weiter mit ${current}`);
+		}
+		const next = sanitizeMissionSettings({
+			...missionSettings,
+			...(imported.rcLostBehaviour ? { rcLostBehaviour: imported.rcLostBehaviour } : {}),
+			...(imported.finishAction ? { finishAction: imported.finishAction } : {}),
+			...(imported.takeOffSecurityHeight !== undefined ? { takeOffSecurityHeight: imported.takeOffSecurityHeight } : {}),
+			...(imported.rthHeight !== undefined ? { rthHeight: imported.rthHeight } : {}),
+		});
+		Object.assign(missionSettings, next);
+	}
+
+	/**
 	 * 使用页面默认值补齐缺省字段，并限制导入参数到现有控件范围。
 	 */
 	private normalizeImportedConfig(imported: PlanarKmzImportResult, warnings: string[]): ImportedConfigValues {
+		this.applyImportedMissionSettings(imported, warnings);
 		const heightType = imported.heightType === 1 || imported.heightType === 2 || imported.heightType === 3 ? imported.heightType : PLANAR_EDIT_DEFAULTS.heightType;
 		const lineHeight = this.clampImportedNumber(imported.lineHeight, PLANAR_EDIT_DEFAULTS.lineHeight, 2, 1500, 'Flughöhe', warnings);
 		const takeoffSpeed = this.clampImportedNumber(imported.transitionalSpeed, PLANAR_EDIT_DEFAULTS.takeoffSpeed, 1, 15, 'Anfluggeschwindigkeit', warnings);
@@ -200,7 +223,7 @@ export class KmzImportHandler {
 		const lineAngle = this.clampImportedNumber(imported.lineAngle, PLANAR_EDIT_DEFAULTS.lineAngle, 0, 179, 'Ausrichtung der Fluglinien', warnings);
 		const smartObliqueGimbalPitch = this.clampImportedNumber(imported.gimbalPitchDegrees, PLANAR_EDIT_DEFAULTS.smartObliqueGimbalPitch, -85, -40, 'Gimbal-Neigung', warnings);
 		const photoTriggerMode = imported.photoTriggerMode ?? PLANAR_EDIT_DEFAULTS.photoTriggerMode;
-		const cameraFieldOfView = calculateCameraFieldOfView(M3TD_WIDE_CAMERA);
+		const cameraFieldOfView = calculateCameraFieldOfView(selectedCamera());
 		const fallbackPhotoDistance = calculatePhotoDistance(lineHeight, cameraFieldOfView.verticalDegrees, overlapH);
 		const photoDistance = imported.photoDistance && imported.photoDistance > 0 ? imported.photoDistance : fallbackPhotoDistance;
 		const maxSpeed = Number(calculateMaxFlightSpeed(photoDistance).toFixed(1));

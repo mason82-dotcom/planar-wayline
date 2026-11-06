@@ -11,7 +11,8 @@ import AircraftSelect from './components/AircraftSelect.vue';
 import CesiumMap from './components/CesiumMap.vue';
 import SaveAirlineDialog from './components/SaveAirlineDialog.vue';
 import PlanarRouteConfigPanel from './components/PlanarRouteConfigPanel.vue';
-import { calculateCameraFieldOfView, M3TD_WIDE_CAMERA } from './config/cameraConfig';
+import { calculateCameraFieldOfView } from './config/cameraConfig';
+import { getAircraftProfile, missionSettings, selectedCamera } from './config/aircraftConfig';
 import globeConfig, { applyFlightSpeedLimit, PLANAR_EDIT_DEFAULTS } from './config/planarConfig';
 import { drawPolygon, movePolygon, PolygonDrawingResult } from './utils/drawPolygon';
 import { calculateFiveDirectionRoutes, FiveDirectionRouteKey, FiveDirectionRoutePlan } from './utils/obliqueRoute';
@@ -551,6 +552,11 @@ export class Instance extends BaseInstance {
 			gimbalPitchDegrees: Number(globeConfig.smartObliqueGimbalPitch),
 			photoTriggerMode: globeConfig.photoTriggerMode,
 			photoDistance: this.photoDistance,
+			aircraft: getAircraftProfile(missionSettings.aircraftKey),
+			rcLostBehaviour: missionSettings.rcLostBehaviour,
+			finishAction: missionSettings.finishAction,
+			takeOffSecurityHeight: missionSettings.takeOffSecurityHeight,
+			rthHeight: missionSettings.rthHeight,
 		});
 	};
 
@@ -584,7 +590,7 @@ export class Instance extends BaseInstance {
 				throw new Error('Flughöhe zu gering, Route kann nicht geplant werden');
 			}
 
-			const cameraFieldOfView = calculateCameraFieldOfView(M3TD_WIDE_CAMERA);
+			const cameraFieldOfView = calculateCameraFieldOfView(selectedCamera());
 			const crossTrackFov = cameraFieldOfView.horizontalDegrees;
 			const halfFovRadians = (crossTrackFov * Math.PI) / 360;
 			const footprintWidth = 2 * minimumGroundClearance * Math.tan(halfFovRadians);

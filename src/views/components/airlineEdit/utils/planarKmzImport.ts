@@ -45,6 +45,15 @@ export interface PlanarKmzImportResult {
 	photoTriggerMode?: PlanarKmzPhotoTriggerMode;
 	photoDistance?: number;
 	gimbalPitchDegrees?: number;
+	/** droneInfo / payloadInfo aus missionConfig */
+	droneEnumValue?: number;
+	droneSubEnumValue?: number;
+	payloadEnumValue?: number;
+	/** exitOnRCLost + executeRCLostAction zusammengefasst */
+	rcLostBehaviour?: 'goBack' | 'landing' | 'hover' | 'goContinue';
+	finishAction?: 'goHome' | 'autoLand' | 'gotoFirstWaypoint' | 'noAction';
+	takeOffSecurityHeight?: number;
+	rthHeight?: number;
 	routes: PlanarKmzImportedRoute[];
 	warnings: string[];
 }
@@ -135,7 +144,17 @@ export async function parsePlanarKmz(file: Blob): Promise<PlanarKmzImportResult>
 	}
 
 	const photoDistance = parsePhotoDistance(routes, speed);
+	const missionValue = (name: string): Element | null => findDirectChild(missionConfig, name) ?? findDirectChild(waylineMissionConfig, name);
+	const droneInfo = missionValue('droneInfo');
+	const payloadInfo = missionValue('payloadInfo');
 	const result: PlanarKmzImportResult = {
+		droneEnumValue: parseNumber(findDirectChild(droneInfo, 'droneEnumValue')),
+		droneSubEnumValue: parseNumber(findDirectChild(droneInfo, 'droneSubEnumValue')),
+		payloadEnumValue: parseNumber(findDirectChild(payloadInfo, 'payloadEnumValue')),
+		rcLostBehaviour: parseRcLostBehaviour(readText(missionValue('exitOnRCLost')), readText(missionValue('executeRCLostAction'))),
+		finishAction: parseFinishAction(readText(missionValue('finishAction'))),
+		takeOffSecurityHeight: parseNumber(missionValue('takeOffSecurityHeight')),
+		rthHeight: parseNumber(missionValue('globalRTHHeight')),
 		templateType,
 		polygon,
 		takeoffPosition,
@@ -268,6 +287,19 @@ function parsePolygon(folder: Element): PlanarKmzCoordinate[] {
 /**
  * 读取任务参考起飞点，WPML 顺序为纬度、经度、椭球高。
  */
+/**
+ * Verhalten bei Verbindungsverlust: goContinue setzt die Route fort, executeLostAction führt executeRCLostAction aus.
+ */
+function parseRcLostBehaviour(exitOnRcLost?: string, lostAction?: string): PlanarKmzImportResult['rcLostBehaviour'] {
+	if (exitOnRcLost === 'goContinue') return 'goContinue';
+	if (exitOnRcLost === 'executeLostAction' && (lostAction === 'goBack' || lostAction === 'landing' || lostAction === 'hover')) return lostAction;
+	return undefined;
+}
+
+function parseFinishAction(value?: string): PlanarKmzImportResult['finishAction'] {
+	return value === 'goHome' || value === 'autoLand' || value === 'gotoFirstWaypoint' || value === 'noAction' ? value : undefined;
+}
+
 function parseTakeoffPosition(missionConfig: Element | null): PlanarKmzCoordinate | undefined {
 	const raw = readText(findDirectChild(missionConfig, 'takeOffRefPoint'));
 	if (!raw) {

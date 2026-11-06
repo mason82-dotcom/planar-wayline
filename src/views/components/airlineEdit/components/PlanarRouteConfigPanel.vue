@@ -44,6 +44,58 @@
 					</el-tooltip>
 
 					<div class="base-box">
+						<div>Fluggerät</div>
+						<el-select
+							v-model="missionSettings.aircraftKey"
+							class="photo-trigger-select"
+							fit-input-width
+							popper-class="planar-route-select-popper"
+							@change="handleAircraftChange"
+						>
+							<el-option v-for="item in aircraftProfiles" :key="item.key" :label="item.name" :value="item.key" />
+						</el-select>
+						<div class="setting-hint">{{ selectedCameraHint }}</div>
+					</div>
+
+					<div class="base-box">
+						<div>Sicherheit</div>
+						<div class="smalTitle">Bei Verbindungsverlust</div>
+						<el-select v-model="missionSettings.rcLostBehaviour" class="photo-trigger-select" fit-input-width popper-class="planar-route-select-popper">
+							<el-option v-for="item in rcLostOptions" :key="item.value" :label="item.label" :value="item.value" />
+						</el-select>
+						<div v-if="missionSettings.rcLostBehaviour === 'goContinue'" class="setting-warning">
+							Die Drohne fliegt die Route ohne Verbindung zur Fernsteuerung weiter.
+						</div>
+						<div class="smalTitle">Nach dem letzten Wegpunkt</div>
+						<el-select v-model="missionSettings.finishAction" class="photo-trigger-select" fit-input-width popper-class="planar-route-select-popper">
+							<el-option v-for="item in finishActionOptions" :key="item.value" :label="item.label" :value="item.value" />
+						</el-select>
+						<div class="smalTitle">Sicherheitshöhe nach dem Start</div>
+						<el-input-number
+							v-model="missionSettings.takeOffSecurityHeight"
+							:min="takeOffSecurityHeightRange.min"
+							:max="takeOffSecurityHeightRange.max"
+							:step="5"
+							:precision="0"
+							class="setting-number"
+						/>
+						<span class="setting-unit">m</span>
+						<div class="smalTitle">Rückkehrhöhe</div>
+						<el-input-number
+							v-model="missionSettings.rthHeight"
+							:min="rthHeightRange.min"
+							:max="rthHeightRange.max"
+							:step="10"
+							:precision="0"
+							class="setting-number"
+						/>
+						<span class="setting-unit">m</span>
+						<div v-if="missionSettings.rthHeight > 120" class="setting-warning">
+							Über 120 m – in der EU (Kategorie „Offen“) nur mit Genehmigung zulässig.
+						</div>
+					</div>
+
+					<div class="base-box">
 						<div>Kamera</div>
 						<div class="button-box">
 							<el-button type="primary" round class="btn-item">Weitwinkel</el-button>
@@ -340,6 +392,23 @@
 	margin-left: 5px;
 }
 
+.setting-hint {
+	margin-top: 6px;
+	font-size: 12px;
+	color: #a0a0a0;
+}
+.setting-warning {
+	margin-top: 6px;
+	font-size: 12px;
+	color: #f0a020;
+}
+.setting-number {
+	width: 140px;
+	margin-top: 6px;
+}
+.setting-unit {
+	margin-left: 8px;
+}
 .noSetTakeoffPoint {
 	cursor: pointer;
 	height: 52px;

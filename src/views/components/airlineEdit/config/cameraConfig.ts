@@ -16,14 +16,7 @@ export interface CameraFieldOfView {
 	verticalDegrees: number;
 }
 
-/** M3TD 广角照片规格，82° 为对角视场角。 */
-export const M3TD_WIDE_CAMERA: CameraPhotoSpecification = {
-	model: 'M3TD',
-	lens: 'wide',
-	diagonalFovDegrees: 82,
-	photoWidthPixels: 4032,
-	photoHeightPixels: 3024,
-};
+/* Kameradaten je Fluggerät: siehe aircraftConfig.ts (AIRCRAFT_PROFILES). */
 
 /**
  * 根据对角 FOV 和照片纵横比推导水平、垂直 FOV。

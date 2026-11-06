@@ -6,13 +6,12 @@ import * as Cesium from 'cesium';
 import JSZip from 'jszip';
 import { MINIMUM_PHOTO_INTERVAL_SECONDS } from '../config/planarConfig';
 import { CartesianRouteSegment } from './planarTerrain';
+import type { AircraftProfile, FinishAction, RcLostBehaviour } from '../config/aircraftConfig';
 
 const KML_NAMESPACE = 'http://www.opengis.net/kml/2.2';
 const WPML_NAMESPACE = 'http://www.dji.com/wpmz/1.0.6';
 const XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/';
 const PAYLOAD_POSITION_INDEX = 0;
-const DEFAULT_TAKEOFF_SECURITY_HEIGHT = 20;
-const DEFAULT_RTH_HEIGHT = 100;
 
 export interface PlanarKmzRoute {
 	id: number;
@@ -36,6 +35,16 @@ export interface PlanarKmzExportOptions {
 	gimbalPitchDegrees: number;
 	photoTriggerMode: 'time' | 'distance';
 	photoDistance: number;
+	/** Fluggerät und Kamera (droneInfo / payloadInfo). */
+	aircraft: AircraftProfile;
+	/** Verhalten bei Verlust der Funkverbindung. */
+	rcLostBehaviour: RcLostBehaviour;
+	/** Aktion nach dem letzten Wegpunkt. */
+	finishAction: FinishAction;
+	/** Sicherheitshöhe nach dem Start in m (takeOffSecurityHeight). */
+	takeOffSecurityHeight: number;
+	/** Rückkehrhöhe in m (globalRTHHeight). */
+	rthHeight: number;
 }
 
 interface ExportWaypoint {
@@ -100,6 +109,12 @@ function validateExportOptions(options: PlanarKmzExportOptions): void {
 	}
 	if (!Number.isFinite(options.photoDistance) || options.photoDistance <= 0) {
 		throw new Error('Ungültiges Fotointervall');
+	}
+	if (!Number.isFinite(options.takeOffSecurityHeight) || options.takeOffSecurityHeight < 1.2 || options.takeOffSecurityHeight > 1500) {
+		throw new Error('Ungültige Sicherheitshöhe nach dem Start');
+	}
+	if (!Number.isFinite(options.rthHeight) || options.rthHeight < 2 || options.rthHeight > 1500) {
+		throw new Error('Ungültige Rückkehrhöhe');
 	}
 	if (![1, 2, 3].includes(options.heightType)) {
 		throw new Error('Ungültiger Höhenbezug');
@@ -322,22 +337,24 @@ function createKmlDocument(): XMLDocument {
 function appendMissionConfig(parent: Element, options: PlanarKmzExportOptions): void {
 	const missionConfig = appendWpmlElement(parent, 'missionConfig');
 	appendWpmlElement(missionConfig, 'flyToWaylineMode', 'safely');
-	appendWpmlElement(missionConfig, 'finishAction', 'goHome');
-	appendWpmlElement(missionConfig, 'exitOnRCLost', 'goContinue');
-	appendWpmlElement(missionConfig, 'executeRCLostAction', 'goBack');
-	appendWpmlElement(missionConfig, 'takeOffSecurityHeight', DEFAULT_TAKEOFF_SECURITY_HEIGHT);
+	appendWpmlElement(missionConfig, 'finishAction', options.finishAction);
+	// goContinue: Route trotz Verbindungsverlust fortsetzen; sonst die gewählte Aktion ausführen.
+	const continueOnRcLost = options.rcLostBehaviour === 'goContinue';
+	appendWpmlElement(missionConfig, 'exitOnRCLost', continueOnRcLost ? 'goContinue' : 'executeLostAction');
+	appendWpmlElement(missionConfig, 'executeRCLostAction', continueOnRcLost ? 'goBack' : options.rcLostBehaviour);
+	appendWpmlElement(missionConfig, 'takeOffSecurityHeight', options.takeOffSecurityHeight);
 	const takeoff = toExportWaypoint(options.takeoffPosition);
 	appendWpmlElement(missionConfig, 'takeOffRefPoint', `${formatNumber(takeoff.latitude)},${formatNumber(takeoff.longitude)},${formatNumber(takeoff.height)}`);
 	// 参考起飞点离地高（AGL）；贴地起飞为 0，不能填椭球高。
 	appendWpmlElement(missionConfig, 'takeOffRefPointAGLHeight', 0);
 	appendWpmlElement(missionConfig, 'globalTransitionalSpeed', options.transitionalSpeed);
-	appendWpmlElement(missionConfig, 'globalRTHHeight', DEFAULT_RTH_HEIGHT);
+	appendWpmlElement(missionConfig, 'globalRTHHeight', options.rthHeight);
 	const droneInfo = appendWpmlElement(missionConfig, 'droneInfo');
-	appendWpmlElement(droneInfo, 'droneEnumValue', 91);
-	appendWpmlElement(droneInfo, 'droneSubEnumValue', 1);
+	appendWpmlElement(droneInfo, 'droneEnumValue', options.aircraft.droneEnumValue);
+	appendWpmlElement(droneInfo, 'droneSubEnumValue', options.aircraft.droneSubEnumValue);
 	appendWpmlElement(missionConfig, 'waylineAvoidLimitAreaMode', 0);
 	const payloadInfo = appendWpmlElement(missionConfig, 'payloadInfo');
-	appendWpmlElement(payloadInfo, 'payloadEnumValue', 81);
+	appendWpmlElement(payloadInfo, 'payloadEnumValue', options.aircraft.payloadEnumValue);
 	appendWpmlElement(payloadInfo, 'payloadSubEnumValue', 0);
 	appendWpmlElement(payloadInfo, 'payloadPositionIndex', PAYLOAD_POSITION_INDEX);
 }

@@ -24,9 +24,9 @@ Es gibt kein Backend und keine Benutzerkonten: Routen werden als KMZ-Datei herun
 | **Kurven** | Export als Polylinie; die Drohne glättet die Kurven selbst (`coordinateTurn`) |
 | **Überlappung und Tempo** | Quer- und Längsüberlappung, empfohlene Höchstgeschwindigkeit und minimales Fotointervall wie in FlightHub |
 
-Zur Auswahl stehen die Serien Matrice 30, Mavic 3 Enterprise, Matrice 3D, Matrice 4 Enterprise und Matrice 4D.
+**Fluggeräte:** Matrice 4T (Vorgabe), 4E, 4TD, 4D, Matrice 3TD, 3D, Mavic 3E, 3T, 3M, 3TA, Matrice 30 und 30T. Die Auswahl bestimmt den Bildwinkel der Weitwinkelkamera (Linien- und Fotoabstand) und die Gerätekennung im Export (`droneEnumValue`, `droneSubEnumValue`, `payloadEnumValue` laut DJI Cloud API). Beim Import wird das Fluggerät aus der Datei übernommen; innerhalb einer Gerätefamilie entscheidet wie in Pilot 2 die Kamera.
 
-> **Achtung:** Die Modellauswahl ist bisher nur eine Anzeige. Kamera-Bildwinkel und Gerätekennung im Export sind fest auf **Matrice 3TD** eingestellt. Für andere Modelle stimmen Linienabstand und Fotointervall nicht, und Pilot 2 kann die Route ablehnen.
+**Sicherheit:** Verhalten bei Verbindungsverlust (Vorgabe: Rückkehr zum Startpunkt), Aktion nach dem letzten Wegpunkt, Sicherheitshöhe nach dem Start und Rückkehrhöhe sind einstellbar, werden aus importierten Dateien übernommen und im Browser gespeichert.
 
 ---
 
@@ -145,7 +145,6 @@ Umgekehrt geht es ebenso: KMZ aus FlightHub exportieren, hier **Route importiere
 - Der Referenz-Startpunkt dient nur der Planung; im Flug zählt der tatsächliche Startpunkt.
 - Die Geländefolge ist nur so genau wie das Geländemodell. Bäume und Gebäude sind darin **nicht** enthalten. Sicherheitsabstände in Pilot 2 bzw. vor Ort prüfen.
 - Infrarot und weitere Kameraoptionen sind teilweise nur Platzhalter.
-- Die Modellauswahl wirkt sich noch nicht auf Kamera und Export aus (siehe Hinweis oben).
 
 ---
 
