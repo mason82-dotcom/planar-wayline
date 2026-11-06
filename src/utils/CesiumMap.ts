@@ -1,12 +1,22 @@
 /**
  * 功能名称：Cesium 地图极简初始化（开源独立工程）
- * 默认影像 + 世界地形 + 定位西安
+ * 有 Cesium ion Token 时使用 ion 影像与世界地形；否则使用免 Token 数据源
+ * (Esri imagery, optional WMS orthophotos, Mapterhorn terrain)。
  */
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
+import { createImageryLayers, createRgbTerrainProvider } from './freeMapSources';
 
-/** 西安附近默认视点 [经度, 纬度, 高度米] */
-const XIAN_HOME: [number, number, number] = [108.94, 34.34, 20000];
+/** 默认视点 [经度, 纬度, 高度米]，可通过 VITE_HOME_VIEW="lon,lat,height" 配置（默认西安附近） */
+const DEFAULT_HOME: [number, number, number] = [108.94, 34.34, 20000];
+
+function homeView(): [number, number, number] {
+	const parts = (import.meta.env.VITE_HOME_VIEW || '').split(',').map((v) => Number(v.trim()));
+	if (parts.length === 3 && parts.every(Number.isFinite) && Math.abs(parts[0]) <= 180 && Math.abs(parts[1]) <= 90 && parts[2] > 0) {
+		return parts as [number, number, number];
+	}
+	return DEFAULT_HOME;
+}
 
 /**
  * 初始化 Cesium Viewer（默认影像与地形）
@@ -21,6 +31,7 @@ export const initMap = (cesiumContainer: string | Element): Cesium.Viewer => {
 	if (token) {
 		Cesium.Ion.defaultAccessToken = token;
 	}
+	const imageryLayers = token ? [] : createImageryLayers();
 
 	const viewer = new Cesium.Viewer(cesiumContainer, {
 		animation: false,
@@ -33,12 +44,18 @@ export const initMap = (cesiumContainer: string | Element): Cesium.Viewer => {
 		selectionIndicator: false,
 		timeline: false,
 		navigationHelpButton: false,
-		terrain: Cesium.Terrain.fromWorldTerrain(),
+		...(token
+			? { terrain: Cesium.Terrain.fromWorldTerrain() }
+			: { terrainProvider: createRgbTerrainProvider(), baseLayer: imageryLayers[0] }),
 	});
+	for (const layer of imageryLayers.slice(1)) {
+		viewer.imageryLayers.add(layer);
+	}
 
 	viewer.scene.globe.depthTestAgainstTerrain = true;
+	const home = homeView();
 	viewer.camera.setView({
-		destination: Cesium.Cartesian3.fromDegrees(XIAN_HOME[0], XIAN_HOME[1], XIAN_HOME[2]),
+		destination: Cesium.Cartesian3.fromDegrees(home[0], home[1], home[2]),
 		orientation: {
 			heading: Cesium.Math.toRadians(0),
 			pitch: Cesium.Math.toRadians(-90),

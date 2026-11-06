@@ -62,13 +62,13 @@ interface ScanRow {
  */
 export function calculateMaximumLineSpacing(minimumGroundClearance: number, horizontalFovDegrees: number, sideOverlapPercent: number): number {
 	if (!Number.isFinite(minimumGroundClearance) || minimumGroundClearance <= 0) {
-		throw new Error('最小离地高度必须大于 0');
+		throw new Error('Der minimale Bodenabstand muss größer als 0 sein');
 	}
 	if (!Number.isFinite(horizontalFovDegrees) || horizontalFovDegrees <= 0 || horizontalFovDegrees >= 180) {
-		throw new Error('相机水平视场角无效');
+		throw new Error('Ungültiger horizontaler Bildwinkel der Kamera');
 	}
 	if (!Number.isFinite(sideOverlapPercent) || sideOverlapPercent < 0 || sideOverlapPercent >= 100) {
-		throw new Error('旁向重叠率无效');
+		throw new Error('Ungültige Querüberlappung');
 	}
 
 	const halfFovRadians = (horizontalFovDegrees * Math.PI) / 360;
@@ -81,13 +81,13 @@ export function calculateMaximumLineSpacing(minimumGroundClearance: number, hori
  */
 export function calculatePhotoDistance(minimumGroundClearance: number, verticalFovDegrees: number, forwardOverlapPercent: number): number {
 	if (!Number.isFinite(minimumGroundClearance) || minimumGroundClearance <= 0) {
-		throw new Error('最小离地高度必须大于 0');
+		throw new Error('Der minimale Bodenabstand muss größer als 0 sein');
 	}
 	if (!Number.isFinite(verticalFovDegrees) || verticalFovDegrees <= 0 || verticalFovDegrees >= 180) {
-		throw new Error('相机垂直视场角无效');
+		throw new Error('Ungültiger vertikaler Bildwinkel der Kamera');
 	}
 	if (!Number.isFinite(forwardOverlapPercent) || forwardOverlapPercent < 0 || forwardOverlapPercent >= 100) {
-		throw new Error('航向重叠率无效');
+		throw new Error('Ungültige Längsüberlappung');
 	}
 
 	const halfFovRadians = (verticalFovDegrees * Math.PI) / 360;
@@ -116,7 +116,7 @@ export function calculatePlanarRoute(options: PlanarRouteOptions): PlanarRoutePl
 	}
 
 	if (!bestPlan) {
-		throw new Error('当前测区无法生成有效航线');
+		throw new Error('Für dieses Messgebiet kann keine gültige Route erzeugt werden');
 	}
 
 	return bestPlan;
@@ -154,16 +154,16 @@ export function isPointInsidePolygon(point: LocalPoint, polygon: LocalPoint[]): 
  */
 function validateOptions(options: PlanarRouteOptions): void {
 	if (options.polygon.length < 3) {
-		throw new Error('测区至少需要 3 个顶点');
+		throw new Error('Das Messgebiet braucht mindestens 3 Eckpunkte');
 	}
 	if (Math.abs(calculateSignedArea(options.polygon)) <= EPSILON) {
-		throw new Error('测区面积无效');
+		throw new Error('Ungültige Fläche des Messgebiets');
 	}
 	if (!Number.isFinite(options.maximumLineSpacing) || options.maximumLineSpacing <= 0) {
-		throw new Error('自动行距无效');
+		throw new Error('Ungültiger Linienabstand');
 	}
 	if (!Number.isFinite(options.footprintWidth) || options.footprintWidth <= 0) {
-		throw new Error('相机覆盖宽度无效');
+		throw new Error('Ungültige Bildbreite am Boden');
 	}
 }
 
@@ -536,7 +536,7 @@ function findShortestPathInsidePolygon(start: LocalPoint, end: LocalPoint, polyg
 
 	const previous = runDijkstra(graph, 0);
 	if (previous[1] === -1) {
-		throw new Error('测区内部航段无法连通');
+		throw new Error('Die Abschnitte innerhalb des Messgebiets lassen sich nicht verbinden');
 	}
 
 	const pathIndexes: number[] = [];

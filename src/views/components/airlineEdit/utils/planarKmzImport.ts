@@ -45,6 +45,15 @@ export interface PlanarKmzImportResult {
 	photoTriggerMode?: PlanarKmzPhotoTriggerMode;
 	photoDistance?: number;
 	gimbalPitchDegrees?: number;
+	/** droneInfo / payloadInfo aus missionConfig */
+	droneEnumValue?: number;
+	droneSubEnumValue?: number;
+	payloadEnumValue?: number;
+	/** exitOnRCLost + executeRCLostAction zusammengefasst */
+	rcLostBehaviour?: 'goBack' | 'landing' | 'hover' | 'goContinue';
+	finishAction?: 'goHome' | 'autoLand' | 'gotoFirstWaypoint' | 'noAction';
+	takeOffSecurityHeight?: number;
+	rthHeight?: number;
 	routes: PlanarKmzImportedRoute[];
 	warnings: string[];
 }
@@ -72,13 +81,13 @@ export async function parsePlanarKmz(file: Blob): Promise<PlanarKmzImportResult>
 	const templateFolder = findTemplateFolder(template.root);
 	const templateType = readTemplateType(templateFolder);
 	if (!SUPPORTED_TEMPLATE_TYPES.has(templateType)) {
-		throw new Error('仅支持 mapping2d 和 mapping3d 面状航线');
+		throw new Error('Unterstützt werden nur Flächenrouten vom Typ mapping2d und mapping3d');
 	}
 
 	const warnings: string[] = [];
 	const polygon = parsePolygon(templateFolder);
 	if (polygon.length < 3) {
-		throw new Error('KMZ 中缺少有效测区，至少需要三个测区顶点');
+		throw new Error('In der KMZ-Datei fehlt ein gültiges Messgebiet (mindestens drei Eckpunkte)');
 	}
 
 	const waylineDocument = findDocument(waylines.document);
@@ -107,13 +116,13 @@ export async function parsePlanarKmz(file: Blob): Promise<PlanarKmzImportResult>
 	}
 
 	if (routes.length === 0) {
-		throw new Error('KMZ 中缺少有效航线航点');
+		throw new Error('In der KMZ-Datei fehlen gültige Wegpunkte');
 	}
 	if (templateType === 'mapping2d' && routes.length !== 1) {
-		throw new Error('mapping2d 文件必须包含一组有效航线');
+		throw new Error('Eine mapping2d-Datei muss genau eine gültige Route enthalten');
 	}
 	if (templateType === 'mapping3d' && routes.length !== 5) {
-		throw new Error('mapping3d 文件必须包含五组有效航线');
+		throw new Error('Eine mapping3d-Datei muss fünf gültige Routen enthalten');
 	}
 	if (speed === undefined) {
 		speed = parseNumber(findDirectChild(folders[0], 'autoFlightSpeed'));
@@ -135,7 +144,17 @@ export async function parsePlanarKmz(file: Blob): Promise<PlanarKmzImportResult>
 	}
 
 	const photoDistance = parsePhotoDistance(routes, speed);
+	const missionValue = (name: string): Element | null => findDirectChild(missionConfig, name) ?? findDirectChild(waylineMissionConfig, name);
+	const droneInfo = missionValue('droneInfo');
+	const payloadInfo = missionValue('payloadInfo');
 	const result: PlanarKmzImportResult = {
+		droneEnumValue: parseNumber(findDirectChild(droneInfo, 'droneEnumValue')),
+		droneSubEnumValue: parseNumber(findDirectChild(droneInfo, 'droneSubEnumValue')),
+		payloadEnumValue: parseNumber(findDirectChild(payloadInfo, 'payloadEnumValue')),
+		rcLostBehaviour: parseRcLostBehaviour(readText(missionValue('exitOnRCLost')), readText(missionValue('executeRCLostAction'))),
+		finishAction: parseFinishAction(readText(missionValue('finishAction'))),
+		takeOffSecurityHeight: parseNumber(missionValue('takeOffSecurityHeight')),
+		rthHeight: parseNumber(missionValue('globalRTHHeight')),
 		templateType,
 		polygon,
 		takeoffPosition,
@@ -163,7 +182,7 @@ async function loadZip(file: Blob): Promise<JSZip> {
 	try {
 		return await JSZip.loadAsync(file);
 	} catch {
-		throw new Error('KMZ 文件解压失败，请确认文件格式正确');
+		throw new Error('Die KMZ-Datei konnte nicht entpackt werden – bitte das Dateiformat prüfen');
 	}
 }
 
@@ -180,7 +199,7 @@ async function readZipXml(zip: JSZip, expectedName: string): Promise<string> {
 	});
 	const target = targetPath ? zip.file(targetPath) : null;
 	if (!target) {
-		throw new Error(`KMZ 中缺少 ${expectedName}`);
+		throw new Error(`In der KMZ-Datei fehlt ${expectedName}`);
 	}
 	return await target.async('string');
 }
@@ -191,7 +210,7 @@ async function readZipXml(zip: JSZip, expectedName: string): Promise<string> {
 function parseXml(xml: string, fileName: string): ParsedDocument {
 	const document = new DOMParser().parseFromString(xml, 'text/xml');
 	if (document.getElementsByTagName('parsererror').length > 0) {
-		throw new Error(`${fileName} XML 解析失败`);
+		throw new Error(`${fileName}: XML konnte nicht gelesen werden`);
 	}
 	const root = findDocument(document);
 	return { document, root };
@@ -206,7 +225,7 @@ function findDocument(document: XMLDocument): Element {
 	}
 	const documentNode = findDescendant(document.documentElement, 'Document');
 	if (!documentNode) {
-		throw new Error('KMZ XML 中缺少 Document 节点');
+		throw new Error('Im KMZ-XML fehlt der Document-Knoten');
 	}
 	return documentNode;
 }
@@ -217,7 +236,7 @@ function findDocument(document: XMLDocument): Element {
 function findTemplateFolder(document: Element): Element {
 	const folders = findDirectChildren(document, 'Folder');
 	if (folders.length === 0) {
-		throw new Error('template.kml 中缺少模板 Folder');
+		throw new Error('In template.kml fehlt der Vorlagen-Folder');
 	}
 	return folders[0];
 }
@@ -231,9 +250,9 @@ function readTemplateType(folder: Element): PlanarKmzTemplateType {
 		return value;
 	}
 	if (value) {
-		throw new Error(`暂不支持 ${value} 航线类型`);
+		throw new Error(`Routentyp ${value} wird noch nicht unterstützt`);
 	}
-	throw new Error('KMZ 中缺少航线模板类型');
+	throw new Error('In der KMZ-Datei fehlt der Routentyp');
 }
 
 /**
@@ -268,6 +287,19 @@ function parsePolygon(folder: Element): PlanarKmzCoordinate[] {
 /**
  * 读取任务参考起飞点，WPML 顺序为纬度、经度、椭球高。
  */
+/**
+ * Verhalten bei Verbindungsverlust: goContinue setzt die Route fort, executeLostAction führt executeRCLostAction aus.
+ */
+function parseRcLostBehaviour(exitOnRcLost?: string, lostAction?: string): PlanarKmzImportResult['rcLostBehaviour'] {
+	if (exitOnRcLost === 'goContinue') return 'goContinue';
+	if (exitOnRcLost === 'executeLostAction' && (lostAction === 'goBack' || lostAction === 'landing' || lostAction === 'hover')) return lostAction;
+	return undefined;
+}
+
+function parseFinishAction(value?: string): PlanarKmzImportResult['finishAction'] {
+	return value === 'goHome' || value === 'autoLand' || value === 'gotoFirstWaypoint' || value === 'noAction' ? value : undefined;
+}
+
 function parseTakeoffPosition(missionConfig: Element | null): PlanarKmzCoordinate | undefined {
 	const raw = readText(findDirectChild(missionConfig, 'takeOffRefPoint'));
 	if (!raw) {
@@ -529,31 +561,31 @@ function parsePhotoDistance(routes: PlanarKmzImportedRoute[], speed: number | un
  */
 function appendMissingFieldWarnings(result: PlanarKmzImportResult): void {
 	if (!result.takeoffPosition) {
-		result.warnings.push('文件缺少参考起飞点，请在页面中重新设置');
+		result.warnings.push('Die Datei enthält keinen Referenz-Startpunkt – bitte in der Karte neu setzen');
 	}
 	if (result.heightType === undefined) {
-		result.warnings.push('文件缺少高度模式，已使用页面默认值');
+		result.warnings.push('Die Datei enthält keinen Höhenbezug – Standardwert verwendet');
 	}
 	if (result.lineHeight === undefined) {
-		result.warnings.push('文件缺少航线高度，已使用页面默认值');
+		result.warnings.push('Die Datei enthält keine Flughöhe – Standardwert verwendet');
 	}
 	if (result.speed === undefined) {
-		result.warnings.push('文件缺少航线速度，已使用页面默认值');
+		result.warnings.push('Die Datei enthält keine Routengeschwindigkeit – Standardwert verwendet');
 	}
 	if (result.transitionalSpeed === undefined) {
-		result.warnings.push('文件缺少起飞速度，已使用页面默认值');
+		result.warnings.push('Die Datei enthält keine Anfluggeschwindigkeit – Standardwert verwendet');
 	}
 	if (result.overlapW === undefined || result.overlapH === undefined) {
-		result.warnings.push('文件缺少重叠率，已使用页面默认值');
+		result.warnings.push('Die Datei enthält keine Überlappung – Standardwerte verwendet');
 	}
 	if (result.lineAngle === undefined) {
-		result.warnings.push('文件缺少主航线角度，已使用页面默认值');
+		result.warnings.push('Die Datei enthält keine Ausrichtung der Fluglinien – Standardwert verwendet');
 	}
 	if (result.templateType === 'mapping3d' && result.gimbalPitchDegrees === undefined) {
-		result.warnings.push('文件缺少倾斜云台角度，已使用页面默认值');
+		result.warnings.push('Die Datei enthält keine Gimbal-Neigung für Schrägaufnahmen – Standardwert verwendet');
 	}
 	if (result.photoTriggerMode === undefined || result.photoDistance === undefined) {
-		result.warnings.push('文件缺少拍照触发参数，已使用页面默认值');
+		result.warnings.push('Die Datei enthält keine Foto-Auslösung – Standardwert verwendet');
 	}
 }
 

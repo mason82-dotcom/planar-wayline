@@ -3,6 +3,7 @@
  * 日    期：2025/06/11 17:59:20
  */
 import * as Cesium from 'cesium';
+import { ellipsoidToEgm96 } from 'egm96-universal';
 import startPoint_icon from '../img/start_point.svg';
 import globeConfig from '../config/planarConfig';
 import { CreateFrustum } from './frustum';
@@ -24,7 +25,7 @@ export let airLinePointData: any = reactive({
 });
 
 const START_POINT_TIP_CLASS = 'draw-center-tips';
-const START_POINT_TIP_TEXT = '点击地图设置参考起飞点';
+const START_POINT_TIP_TEXT = 'In die Karte klicken, um den Referenz-Startpunkt zu setzen';
 
 /** 在 .wayMap 上显示起飞点拾取中心提示 */
 function showStartPointTip(): void {
@@ -87,7 +88,7 @@ export function addStartPoint(viewer: Cesium.Viewer, cb?: Function) {
 			});
 		});
 	} else {
-		console.warn('未找到地图容器');
+		console.warn('Kartenbereich nicht gefunden');
 	}
 }
 
@@ -116,7 +117,10 @@ export function addMapLeftClickEvent(viewer: Cesium.Viewer | null, cb: Function)
 		// 初始高度设置
 		const height = hb;
 		if (globeConfig.heightType === 1) {
-			globeConfig.lineHeight = Number(hb.toFixed(1)) + 100;
+			// 海拔模式输入为 EGM96 高度：椭球高需先减去大地水准面差距。
+			// ASL input is an EGM96 height, so convert the ellipsoidal ground height first.
+			const groundAsl = ellipsoidToEgm96(Cesium.Math.toDegrees(cartographic.latitude), Cesium.Math.toDegrees(cartographic.longitude), hb);
+			globeConfig.lineHeight = Number(groundAsl.toFixed(1)) + 100;
 		}
 		const position = Cesium.Cartesian3.fromDegrees(Cesium.Math.toDegrees(cartographic.longitude), Cesium.Math.toDegrees(cartographic.latitude), height);
 		globeConfig.flyPosition = position as any;
@@ -272,7 +276,7 @@ export function handleLineOutOfBoundary(points: Array<[]>, sidePoint) {
 	}
 	outPoint.push(points[points.length - 1]);
 
-	console.log('边缘计算结果', outPoint);
+	console.log('Berechnete Randlinie', outPoint);
 
 	return outPoint;
 }
@@ -316,7 +320,7 @@ function getHeight(longitude, latitude) {
 	// 获取到海拔高度
 	const hb: any = window.mainViewer.scene.globe.getHeight(cartographic);
 
-	console.log('地形高度', hb);
+	console.log('Geländehöhe', hb);
 
 	return hb + globeConfig.lineHeight;
 }

@@ -37,10 +37,10 @@ export function roundPlanarRouteSegments(segments: PlanarRouteSegment[], options
 	const dampingDistance = options.dampingDistance ?? DEFAULT_DAMPING_DISTANCE;
 	const minimumDampingDistance = options.minimumDampingDistance ?? MINIMUM_DAMPING_DISTANCE;
 	if (!Number.isFinite(dampingDistance) || dampingDistance <= 0) {
-		throw new Error('转弯缓冲距离必须大于 0');
+		throw new Error('Der Kurvenabstand muss größer als 0 sein');
 	}
 	if (!Number.isFinite(minimumDampingDistance) || minimumDampingDistance <= 0 || minimumDampingDistance > dampingDistance) {
-		throw new Error('最小转弯缓冲距离无效');
+		throw new Error('Ungültiger minimaler Kurvenabstand');
 	}
 
 	const edges = createRouteEdges(segments);
@@ -51,7 +51,7 @@ export function roundPlanarRouteSegments(segments: PlanarRouteSegment[], options
 	const vertices: LocalPoint[] = [edges[0].start];
 	for (let edgeIndex = 0; edgeIndex < edges.length; edgeIndex++) {
 		if (edgeIndex > 0 && distance(edges[edgeIndex - 1].end, edges[edgeIndex].start) > EPSILON) {
-			throw new Error('航线航段不连续，无法生成协调转弯');
+			throw new Error('Die Routenabschnitte hängen nicht zusammen – keine Kurvenglättung möglich');
 		}
 		vertices.push(edges[edgeIndex].end);
 	}

@@ -60,7 +60,7 @@ export function updateLineAngleIndicator(dataSource: Cesium.CustomDataSource, po
 
 	dataSource.entities.add({
 		id: INDICATOR_ENTITY_ID,
-		name: '主航线角度指示',
+		name: 'Anzeige der Fluglinien-Ausrichtung',
 		position: centerOnEllipsoid,
 		ellipse: {
 			semiMajorAxis: radius,

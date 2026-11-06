@@ -11,14 +11,14 @@
 					<template #icon>
 						<el-icon style="cursor: pointer"><Files /></el-icon>
 					</template>
-					<template #default> 保存航线 </template>
+					<template #default> Route speichern </template>
 				</el-button>
 				<el-upload class="wayline-import-upload" :auto-upload="false" :show-file-list="false" accept=".kmz" :on-change="handlePlanarKmzSelect">
 					<el-button type="primary" :loading="isImporting" :disabled="isCalculating">
 						<template #icon>
 							<el-icon><Upload /></el-icon>
 						</template>
-						<template #default> 导入航线 </template>
+						<template #default> Route importieren </template>
 					</el-button>
 				</el-upload>
 			</div>
@@ -40,7 +40,7 @@
 			<div class="wayMap planar-map" v-loading="isCalculating || isImporting" :element-loading-text="mapLoadingText">
 				<CesiumMap @loadMap="loadMainMap"></CesiumMap>
 				<div v-if="isObliqueMode && activeRouteSummary" class="route-switcher">
-					<div class="route-switcher__tabs" role="tablist" aria-label="五向倾斜摄影航线">
+					<div class="route-switcher__tabs" role="tablist" aria-label="Schrägaufnahme mit fünf Blickrichtungen">
 						<button
 							v-for="(route, index) in routeSummaries"
 							:key="route.id"
@@ -55,28 +55,27 @@
 					</div>
 					<div class="route-switcher__stats">
 						<div class="route-switcher__stat">
-							<div class="route-switcher__label">航线长度</div>
+							<div class="route-switcher__label">Routenlänge</div>
 							<div class="route-switcher__value">{{ activeRouteSummary.lengthText }} m</div>
 						</div>
 						<div class="route-switcher__stat">
-							<div class="route-switcher__label">预计时间</div>
+							<div class="route-switcher__label">Geschätzte Flugzeit</div>
 							<div class="route-switcher__value">{{ activeRouteSummary.timeText }}</div>
 						</div>
 						<div class="route-switcher__stat">
-							<div class="route-switcher__label">照片数</div>
+							<div class="route-switcher__label">Anzahl Fotos</div>
 							<div class="route-switcher__value">{{ activeRouteSummary.photoCount }}</div>
 						</div>
 					</div>
 				</div>
-				<div class="delBtn" ref="delBtnRef" @click="delPoy">删除测区</div>
+				<div class="delBtn" ref="delBtnRef" @click="delPoy">Messgebiet löschen</div>
 				<div id="map-error-tip">
 					<el-icon style="transform: translateY(3px)"><InfoFilled /></el-icon>
-					测区不支持交叉面，无法生成航线
+					Das Messgebiet überschneidet sich selbst – daraus kann keine Route erzeugt werden
 				</div>
 			</div>
 		</div>
 	</div>
-	<AircraftSelect v-if="isAircraftSelectShow" v-model="isAircraftSelectShow"></AircraftSelect>
 	<SaveAirlineDialog
 		v-model="showSaveDialog"
 		:default-name="saveDialogDefaultName"

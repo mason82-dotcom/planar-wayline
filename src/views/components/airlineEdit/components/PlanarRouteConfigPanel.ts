@@ -3,8 +3,17 @@
  * 日    期：2026/07/29
  */
 import { computed, defineComponent, ExtractPropTypes, nextTick, onMounted, onUnmounted, PropType, ref, SetupContext, watchEffect } from 'vue';
-import globeConfig, { PLANAR_EDIT_DEFAULTS, PLANAR_SPEED_HARD_MAX } from '../config/planarConfig';
+import globeConfig, { OBSTACLE_CLEARANCE_HINT_METERS, PLANAR_EDIT_DEFAULTS, PLANAR_SPEED_HARD_MAX } from '../config/planarConfig';
 import BaseInstance from '@/utils/BaseInstance';
+import {
+	AIRCRAFT_PROFILES,
+	FINISH_ACTION_OPTIONS,
+	getAircraftProfile,
+	missionSettings,
+	RC_LOST_OPTIONS,
+	RTH_HEIGHT_RANGE,
+	TAKEOFF_SECURITY_HEIGHT_RANGE,
+} from '../config/aircraftConfig';
 
 // 一、Emits 类型定义
 type EmitsType = ('change' | 'updateFlyPoint' | 'updateClimbType' | 'changeLineAngle' | 'lineAngleSliderStart' | 'lineAngleSliderInput' | 'lineAngleSliderChange')[];
@@ -94,6 +103,34 @@ export class Instance extends BaseInstance {
 	get flyPointStatus() {
 		return this.props.flyPointStatus;
 	}
+
+	// Fluggerät und Sicherheit (gelten für den Export, bleiben im Browser gespeichert)
+	missionSettings = missionSettings;
+	aircraftProfiles = AIRCRAFT_PROFILES;
+	rcLostOptions = RC_LOST_OPTIONS;
+	finishActionOptions = FINISH_ACTION_OPTIONS;
+	takeOffSecurityHeightRange = TAKEOFF_SECURITY_HEIGHT_RANGE;
+	rthHeightRange = RTH_HEIGHT_RANGE;
+
+	/** Hinweis, wenn die Route nah über dem Gelände liegt (Bäume, Gebäude, Masten fehlen im Geländemodell). */
+	clearanceHint = computed(() => {
+		const clearance = globeConfig.minGroundClearance;
+		if (clearance === null || !(Number(globeConfig.lineLength) > 0) || clearance >= OBSTACLE_CLEARANCE_HINT_METERS) {
+			return '';
+		}
+		return `Nur ${Math.round(clearance)} m über dem höchsten Geländepunkt der Route – Bäume, Gebäude und Masten sind im Geländemodell nicht enthalten.`;
+	});
+
+	/** Bildwinkel des gewählten Fluggeräts als kurzer Hinweis unter der Auswahl. */
+	selectedCameraHint = computed(() => {
+		const camera = getAircraftProfile(missionSettings.aircraftKey).camera;
+		return `Weitwinkelkamera, Bildwinkel ${camera.diagonalFovDegrees}° diagonal`;
+	});
+
+	/** Anderes Fluggerät: Kamera ändert Linien- und Fotoabstand, daher neu planen. */
+	handleAircraftChange = () => {
+		this.ctx.emit('change');
+	};
 
 	get isObliqueMode() {
 		return this.props.isObliqueMode;

@@ -5,7 +5,8 @@
 import * as Cesium from 'cesium';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Ref } from 'vue';
-import { calculateCameraFieldOfView, M3TD_WIDE_CAMERA } from '../config/cameraConfig';
+import { calculateCameraFieldOfView } from '../config/cameraConfig';
+import { findAircraftProfile, getAircraftProfile, missionSettings, sanitizeMissionSettings, selectedCamera } from '../config/aircraftConfig';
 import globeConfig, { calculateMaxFlightSpeed, PLANAR_EDIT_DEFAULTS, PLANAR_SPEED_HARD_MAX } from '../config/planarConfig';
 import { drawImportedPolygon, PolygonDrawingResult } from '../utils/drawPolygon';
 import { drawFlyStartLine } from '../utils/planarLine';
@@ -118,7 +119,7 @@ export class KmzImportHandler {
 	async importPlanarKmzFromUrl(fileUrl: string, waylineName?: string): Promise<void> {
 		const response = await fetch(fileUrl);
 		if (!response.ok) {
-			throw new Error(`获取航线文件失败: ${response.statusText}`);
+			throw new Error(`Routendatei konnte nicht geladen werden: ${response.statusText}`);
 		}
 		const blob = await response.blob();
 		const filename = waylineName ? `${waylineName}.kmz` : 'wayline.kmz';
@@ -131,11 +132,11 @@ export class KmzImportHandler {
 	 */
 	async importPlanarKmz(file: File): Promise<void> {
 		if (!window.mainViewer || !window.mainViewer.dataSources) {
-			ElMessage.warning('地图尚未加载完成');
+			ElMessage.warning('Die Karte ist noch nicht vollständig geladen');
 			return;
 		}
 		if (!file.name.toLowerCase().endsWith('.kmz')) {
-			ElMessage.warning('请选择 KMZ 航线文件');
+			ElMessage.warning('Bitte eine KMZ-Routendatei auswählen');
 			return;
 		}
 
@@ -156,13 +157,13 @@ export class KmzImportHandler {
 			if (version !== this.ctx.routeCalculationVersion) {
 				return;
 			}
-			ElMessage.success('航线导入成功');
+			ElMessage.success('Route importiert');
 			if (warnings.length > 0) {
 				const uniqueWarnings = Array.from(new Set(warnings));
-				ElMessage.warning({ message: uniqueWarnings.join('；'), duration: 8000 });
+				ElMessage.warning({ message: uniqueWarnings.join('; '), duration: 8000 });
 			}
 		} catch (error) {
-			const message = error instanceof Error ? error.message : '航线导入失败';
+			const message = error instanceof Error ? error.message : 'Import der Route fehlgeschlagen';
 			ElMessage.error(message);
 		} finally {
 			this.ctx.isImporting.value = false;
@@ -177,10 +178,10 @@ export class KmzImportHandler {
 			return true;
 		}
 		try {
-			await ElMessageBox.confirm('导入航线将替换当前测区和航线，是否继续？', '导入航线', {
+			await ElMessageBox.confirm('Der Import ersetzt das aktuelle Messgebiet und die Route. Fortfahren?', 'Route importieren', {
 				type: 'warning',
-				confirmButtonText: '继续导入',
-				cancelButtonText: '取消',
+				confirmButtonText: 'Importieren',
+				cancelButtonText: 'Abbrechen',
 			});
 			return true;
 		} catch {
@@ -189,22 +190,44 @@ export class KmzImportHandler {
 	}
 
 	/**
+	 * Fluggerät und Sicherheitseinstellungen aus der Datei übernehmen; fehlende Werte bleiben wie eingestellt.
+	 */
+	private applyImportedMissionSettings(imported: PlanarKmzImportResult, warnings: string[]): void {
+		const aircraft = findAircraftProfile(imported.droneEnumValue, imported.droneSubEnumValue, imported.payloadEnumValue);
+		if (aircraft) {
+			missionSettings.aircraftKey = aircraft.key;
+		} else if (imported.droneEnumValue !== undefined) {
+			const current = getAircraftProfile(missionSettings.aircraftKey).name;
+			warnings.push(`Unbekanntes Fluggerät ${imported.droneEnumValue}-${imported.droneSubEnumValue ?? 0} (Kamera ${imported.payloadEnumValue ?? '?'}) – weiter mit ${current}`);
+		}
+		const next = sanitizeMissionSettings({
+			...missionSettings,
+			...(imported.rcLostBehaviour ? { rcLostBehaviour: imported.rcLostBehaviour } : {}),
+			...(imported.finishAction ? { finishAction: imported.finishAction } : {}),
+			...(imported.takeOffSecurityHeight !== undefined ? { takeOffSecurityHeight: imported.takeOffSecurityHeight } : {}),
+			...(imported.rthHeight !== undefined ? { rthHeight: imported.rthHeight } : {}),
+		});
+		Object.assign(missionSettings, next);
+	}
+
+	/**
 	 * 使用页面默认值补齐缺省字段，并限制导入参数到现有控件范围。
 	 */
 	private normalizeImportedConfig(imported: PlanarKmzImportResult, warnings: string[]): ImportedConfigValues {
+		this.applyImportedMissionSettings(imported, warnings);
 		const heightType = imported.heightType === 1 || imported.heightType === 2 || imported.heightType === 3 ? imported.heightType : PLANAR_EDIT_DEFAULTS.heightType;
-		const lineHeight = this.clampImportedNumber(imported.lineHeight, PLANAR_EDIT_DEFAULTS.lineHeight, 2, 1500, '航线高度', warnings);
-		const takeoffSpeed = this.clampImportedNumber(imported.transitionalSpeed, PLANAR_EDIT_DEFAULTS.takeoffSpeed, 1, 15, '起飞速度', warnings);
-		const overlapW = this.clampImportedNumber(imported.overlapW, PLANAR_EDIT_DEFAULTS.overlapW, 10, 90, '旁向重叠率', warnings);
-		const overlapH = this.clampImportedNumber(imported.overlapH, PLANAR_EDIT_DEFAULTS.overlapH, 10, 90, '航向重叠率', warnings);
-		const lineAngle = this.clampImportedNumber(imported.lineAngle, PLANAR_EDIT_DEFAULTS.lineAngle, 0, 179, '主航线角度', warnings);
-		const smartObliqueGimbalPitch = this.clampImportedNumber(imported.gimbalPitchDegrees, PLANAR_EDIT_DEFAULTS.smartObliqueGimbalPitch, -85, -40, '云台俯仰角', warnings);
+		const lineHeight = this.clampImportedNumber(imported.lineHeight, PLANAR_EDIT_DEFAULTS.lineHeight, 2, 1500, 'Flughöhe', warnings);
+		const takeoffSpeed = this.clampImportedNumber(imported.transitionalSpeed, PLANAR_EDIT_DEFAULTS.takeoffSpeed, 1, 15, 'Anfluggeschwindigkeit', warnings);
+		const overlapW = this.clampImportedNumber(imported.overlapW, PLANAR_EDIT_DEFAULTS.overlapW, 10, 90, 'Querüberlappung', warnings);
+		const overlapH = this.clampImportedNumber(imported.overlapH, PLANAR_EDIT_DEFAULTS.overlapH, 10, 90, 'Längsüberlappung', warnings);
+		const lineAngle = this.clampImportedNumber(imported.lineAngle, PLANAR_EDIT_DEFAULTS.lineAngle, 0, 179, 'Ausrichtung der Fluglinien', warnings);
+		const smartObliqueGimbalPitch = this.clampImportedNumber(imported.gimbalPitchDegrees, PLANAR_EDIT_DEFAULTS.smartObliqueGimbalPitch, -85, -40, 'Gimbal-Neigung', warnings);
 		const photoTriggerMode = imported.photoTriggerMode ?? PLANAR_EDIT_DEFAULTS.photoTriggerMode;
-		const cameraFieldOfView = calculateCameraFieldOfView(M3TD_WIDE_CAMERA);
+		const cameraFieldOfView = calculateCameraFieldOfView(selectedCamera());
 		const fallbackPhotoDistance = calculatePhotoDistance(lineHeight, cameraFieldOfView.verticalDegrees, overlapH);
 		const photoDistance = imported.photoDistance && imported.photoDistance > 0 ? imported.photoDistance : fallbackPhotoDistance;
 		const maxSpeed = Number(calculateMaxFlightSpeed(photoDistance).toFixed(1));
-		const speed = this.clampImportedNumber(imported.speed, maxSpeed, 1, PLANAR_SPEED_HARD_MAX, '全局航线速度', warnings);
+		const speed = this.clampImportedNumber(imported.speed, maxSpeed, 1, PLANAR_SPEED_HARD_MAX, 'Routengeschwindigkeit', warnings);
 		return { heightType, lineHeight, speed, takeoffSpeed, overlapW, overlapH, lineAngle, photoTriggerMode, smartObliqueGimbalPitch, photoDistance, maxSpeed };
 	}
 
@@ -217,7 +240,7 @@ export class KmzImportHandler {
 		}
 		const clamped = Math.min(maximum, Math.max(minimum, value));
 		if (clamped !== value) {
-			warnings.push(`${label}超出页面范围，已调整为 ${clamped}`);
+			warnings.push(`${label} lag außerhalb des zulässigen Bereichs und wurde auf ${clamped} gesetzt`);
 		}
 		return clamped;
 	}
@@ -232,7 +255,7 @@ export class KmzImportHandler {
 			const positions = await this.resolveImportedWaypointPositions(route, imported.takeoffPosition, warnings);
 			const exportSegments = this.createImportedRouteSegments(route, positions);
 			if (exportSegments.length === 0) {
-				throw new Error(`第 ${routeIndex + 1} 组航线缺少有效航段`);
+				throw new Error(`Route ${routeIndex + 1} enthält keinen gültigen Abschnitt`);
 			}
 			prepared.push({ route, exportSegments });
 		}
@@ -262,7 +285,7 @@ export class KmzImportHandler {
 				for (let index = 0; index < cartographics.length; index++) {
 					terrainHeights.push(window.mainViewer.scene.globe.getHeight(cartographics[index]) ?? 0);
 				}
-				warnings.push('地形服务未返回完整高度，部分导入航点使用当前地图地表高度');
+				warnings.push('Der Geländedienst lieferte nicht alle Höhen – einige importierte Wegpunkte nutzen die aktuell geladene Geländehöhe');
 			}
 		}
 
@@ -299,7 +322,7 @@ export class KmzImportHandler {
 			for (let index = 0; index < cartographics.length; index++) {
 				terrainHeights.push(window.mainViewer.scene.globe.getHeight(cartographics[index]) ?? 0);
 			}
-			warnings.push('当前地形服务未返回完整高度，测区控制点使用已缓存地表高度');
+			warnings.push('Der Geländedienst lieferte nicht alle Höhen – die Eckpunkte des Messgebiets nutzen die zwischengespeicherte Geländehöhe');
 		}
 
 		const positions: Cesium.Cartesian3[] = [];

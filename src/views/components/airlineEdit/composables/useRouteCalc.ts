@@ -3,6 +3,7 @@
  * 日    期：2026/07/29
  */
 import * as Cesium from 'cesium';
+import { egm96ToEllipsoid } from 'egm96-universal';
 import globeConfig from '../config/planarConfig';
 import { LocalPoint, PlanarRouteSegment } from '../utils/wayLineCalc';
 import {
@@ -40,9 +41,9 @@ export function formatRouteDuration(seconds: number): string {
 	const minutes = Math.floor((seconds % 3600) / 60);
 	const remainingSeconds = Math.round(seconds % 60);
 	if (hours > 0) {
-		return `${hours} h ${minutes} m ${remainingSeconds} s`;
+		return `${hours} h ${minutes} min ${remainingSeconds} s`;
 	}
-	return `${minutes} m ${remainingSeconds} s`;
+	return `${minutes} min ${remainingSeconds} s`;
 }
 
 /**
@@ -51,7 +52,7 @@ export function formatRouteDuration(seconds: number): string {
 export async function resolveFlightHeight(viewer: Cesium.Viewer, frame: LocalCoordinateFrame, polygon: LocalPoint[]): Promise<FlightHeightResult> {
 	const lineHeight = Number(globeConfig.lineHeight);
 	if (!Number.isFinite(lineHeight) || lineHeight <= 0) {
-		throw new Error('航线高度无效');
+		throw new Error('Ungültige Flughöhe');
 	}
 
 	if (Number(globeConfig.heightType) === 3) {
@@ -59,14 +60,18 @@ export async function resolveFlightHeight(viewer: Cesium.Viewer, frame: LocalCoo
 	}
 
 	const maximumTerrainHeight = await sampleMaximumTerrainHeight(viewer, frame, polygon);
-	let absoluteFlightHeight = lineHeight;
+	// 海拔高度（ASL）为 EGM96 高度；Cesium 与导出的 WGS84 executeHeight 使用椭球高，需加上大地水准面差距。
+	// ASL input is an EGM96 height; Cesium positions and the exported WGS84 executeHeight are
+	// ellipsoidal, so add the geoid undulation at the survey area (about +48 m in southern Germany).
+	const center = frame.toCartographic({ x: 0, y: 0 });
+	let absoluteFlightHeight = egm96ToEllipsoid(Cesium.Math.toDegrees(center.latitude), Cesium.Math.toDegrees(center.longitude), lineHeight);
 	if (Number(globeConfig.heightType) === 2) {
 		if (!globeConfig.flyPosition) {
-			throw new Error('请先设置参考起飞点');
+			throw new Error('Bitte zuerst den Referenz-Startpunkt setzen');
 		}
 		const takeoffCartographic = Cesium.Cartographic.fromCartesian(globeConfig.flyPosition);
 		if (!takeoffCartographic) {
-			throw new Error('参考起飞点无效');
+			throw new Error('Ungültiger Referenz-Startpunkt');
 		}
 		const takeoffTerrainHeight = await sampleSingleTerrainHeight(viewer, takeoffCartographic);
 		absoluteFlightHeight = takeoffTerrainHeight + lineHeight;
@@ -99,7 +104,7 @@ export function connectTakeoffToFirstWaypoint(segments: CartesianRouteSegment[])
 	const takeoffCartographic = Cesium.Cartographic.fromCartesian(globeConfig.flyPosition);
 	const firstWaypointCartographic = Cesium.Cartographic.fromCartesian(firstWaypoint);
 	if (!takeoffCartographic || !firstWaypointCartographic) {
-		throw new Error('起飞点或首航点坐标无效');
+		throw new Error('Ungültige Koordinaten für Startpunkt oder ersten Wegpunkt');
 	}
 	const climbCompletedPoint = Cesium.Cartesian3.fromRadians(takeoffCartographic.longitude, takeoffCartographic.latitude, firstWaypointCartographic.height);
 	const connectionPositions: Cesium.Cartesian3[] = [globeConfig.flyPosition];
@@ -154,7 +159,7 @@ export function getFirstCartesianRoutePoint(segments: CartesianRouteSegment[]): 
  */
 export function calculateRoutePhotoCount(segments: CartesianRouteSegment[], photoDistance: number, splitCaptureGroups: boolean): number {
 	if (!Number.isFinite(photoDistance) || photoDistance <= 0) {
-		throw new Error('自动拍照距离无效');
+		throw new Error('Ungültiger Fotoabstand');
 	}
 	if (!splitCaptureGroups) {
 		const routeLength = calculateCartesianRouteLength(segments);

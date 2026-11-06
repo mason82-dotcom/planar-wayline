@@ -6,13 +6,12 @@ import * as Cesium from 'cesium';
 import JSZip from 'jszip';
 import { MINIMUM_PHOTO_INTERVAL_SECONDS } from '../config/planarConfig';
 import { CartesianRouteSegment } from './planarTerrain';
+import type { AircraftProfile, FinishAction, RcLostBehaviour } from '../config/aircraftConfig';
 
 const KML_NAMESPACE = 'http://www.opengis.net/kml/2.2';
 const WPML_NAMESPACE = 'http://www.dji.com/wpmz/1.0.6';
 const XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/';
 const PAYLOAD_POSITION_INDEX = 0;
-const DEFAULT_TAKEOFF_SECURITY_HEIGHT = 20;
-const DEFAULT_RTH_HEIGHT = 100;
 
 export interface PlanarKmzRoute {
 	id: number;
@@ -36,6 +35,16 @@ export interface PlanarKmzExportOptions {
 	gimbalPitchDegrees: number;
 	photoTriggerMode: 'time' | 'distance';
 	photoDistance: number;
+	/** Fluggerät und Kamera (droneInfo / payloadInfo). */
+	aircraft: AircraftProfile;
+	/** Verhalten bei Verlust der Funkverbindung. */
+	rcLostBehaviour: RcLostBehaviour;
+	/** Aktion nach dem letzten Wegpunkt. */
+	finishAction: FinishAction;
+	/** Sicherheitshöhe nach dem Start in m (takeOffSecurityHeight). */
+	takeOffSecurityHeight: number;
+	/** Rückkehrhöhe in m (globalRTHHeight). */
+	rthHeight: number;
 }
 
 interface ExportWaypoint {
@@ -72,7 +81,7 @@ export async function buildPlanarKmz(options: PlanarKmzExportOptions): Promise<B
 	const zip = new JSZip();
 	const folder = zip.folder('wpmz');
 	if (!folder) {
-		throw new Error('无法创建 KMZ 目录');
+		throw new Error('KMZ-Ordner konnte nicht angelegt werden');
 	}
 	folder.file('template.kml', buildTemplateKml(options));
 	folder.file('waylines.wpml', buildWaylinesWpml(options, routeData));
@@ -89,24 +98,30 @@ export async function buildPlanarKmz(options: PlanarKmzExportOptions): Promise<B
  */
 function validateExportOptions(options: PlanarKmzExportOptions): void {
 	if (options.polygonPositions.length < 3) {
-		throw new Error('请先绘制有效测区');
+		throw new Error('Bitte zuerst ein gültiges Messgebiet zeichnen');
 	}
 	const expectedRouteCount = options.isOblique ? 5 : 1;
 	if (options.routes.length !== expectedRouteCount) {
-		throw new Error(options.isOblique ? '倾斜摄影必须包含五组航线' : '正射摄影必须包含一组航线');
+		throw new Error(options.isOblique ? 'Eine Schrägaufnahme braucht fünf Routen' : 'Eine Nadir-Aufnahme braucht genau eine Route');
 	}
 	if (!Number.isFinite(options.flightSpeed) || options.flightSpeed <= 0) {
-		throw new Error('航线速度无效');
+		throw new Error('Ungültige Routengeschwindigkeit');
 	}
 	if (!Number.isFinite(options.photoDistance) || options.photoDistance <= 0) {
-		throw new Error('拍照间隔无效');
+		throw new Error('Ungültiges Fotointervall');
+	}
+	if (!Number.isFinite(options.takeOffSecurityHeight) || options.takeOffSecurityHeight < 1.2 || options.takeOffSecurityHeight > 1500) {
+		throw new Error('Ungültige Sicherheitshöhe nach dem Start');
+	}
+	if (!Number.isFinite(options.rthHeight) || options.rthHeight < 2 || options.rthHeight > 1500) {
+		throw new Error('Ungültige Rückkehrhöhe');
 	}
 	if (![1, 2, 3].includes(options.heightType)) {
-		throw new Error('航线高度模式无效');
+		throw new Error('Ungültiger Höhenbezug');
 	}
 	for (let routeIndex = 0; routeIndex < options.routes.length; routeIndex++) {
 		if (options.routes[routeIndex].segments.length === 0) {
-			throw new Error(`第 ${routeIndex + 1} 组航线没有有效航点`);
+			throw new Error(`Route ${routeIndex + 1} enthält keine gültigen Wegpunkte`);
 		}
 	}
 }
@@ -156,12 +171,12 @@ function createExportRouteData(route: PlanarKmzRoute, options: PlanarKmzExportOp
 	}
 
 	if (waypoints.length < 2) {
-		throw new Error(`第 ${route.id} 组航线至少需要两个航点`);
+		throw new Error(`Route ${route.id} braucht mindestens zwei Wegpunkte`);
 	}
 	const captureRanges = Array.from(captureRangeMap.values());
 	captureRanges.sort((left, right) => left.startIndex - right.startIndex);
 	if (captureRanges.length === 0) {
-		throw new Error(`第 ${route.id} 组航线没有有效拍摄区段`);
+		throw new Error(`Route ${route.id} enthält keinen gültigen Aufnahmeabschnitt`);
 	}
 	return {
 		id: route.id,
@@ -179,7 +194,7 @@ function createExportRouteData(route: PlanarKmzRoute, options: PlanarKmzExportOp
 function toExportWaypoint(position: Cesium.Cartesian3): ExportWaypoint {
 	const cartographic = Cesium.Cartographic.fromCartesian(position);
 	if (!cartographic) {
-		throw new Error('航点坐标转换失败');
+		throw new Error('Umrechnung der Wegpunktkoordinaten fehlgeschlagen');
 	}
 	return {
 		longitude: Cesium.Math.toDegrees(cartographic.longitude),
@@ -209,7 +224,7 @@ function getNormalizedPolygonPositions(positions: Cesium.Cartesian3[]): ExportWa
 	for (let positionIndex = 0; positionIndex < positions.length; positionIndex++) {
 		const point = toExportWaypoint(positions[positionIndex]);
 		if (point.longitude < -180 || point.longitude > 180 || point.latitude < -90 || point.latitude > 90) {
-			throw new Error('测区包含无效经纬度');
+			throw new Error('Das Messgebiet enthält ungültige Koordinaten');
 		}
 		const previous = polygon[polygon.length - 1];
 		if (!previous || !areSameCoordinates(previous, point)) {
@@ -220,7 +235,7 @@ function getNormalizedPolygonPositions(positions: Cesium.Cartesian3[]): ExportWa
 		polygon.pop();
 	}
 	if (polygon.length < 3) {
-		throw new Error('测区至少需要三个不同顶点');
+		throw new Error('Das Messgebiet braucht mindestens drei verschiedene Eckpunkte');
 	}
 	if (calculatePolygonSignedArea(polygon) > 0) {
 		polygon.reverse();
@@ -322,22 +337,24 @@ function createKmlDocument(): XMLDocument {
 function appendMissionConfig(parent: Element, options: PlanarKmzExportOptions): void {
 	const missionConfig = appendWpmlElement(parent, 'missionConfig');
 	appendWpmlElement(missionConfig, 'flyToWaylineMode', 'safely');
-	appendWpmlElement(missionConfig, 'finishAction', 'goHome');
-	appendWpmlElement(missionConfig, 'exitOnRCLost', 'goContinue');
-	appendWpmlElement(missionConfig, 'executeRCLostAction', 'goBack');
-	appendWpmlElement(missionConfig, 'takeOffSecurityHeight', DEFAULT_TAKEOFF_SECURITY_HEIGHT);
+	appendWpmlElement(missionConfig, 'finishAction', options.finishAction);
+	// goContinue: Route trotz Verbindungsverlust fortsetzen; sonst die gewählte Aktion ausführen.
+	const continueOnRcLost = options.rcLostBehaviour === 'goContinue';
+	appendWpmlElement(missionConfig, 'exitOnRCLost', continueOnRcLost ? 'goContinue' : 'executeLostAction');
+	appendWpmlElement(missionConfig, 'executeRCLostAction', continueOnRcLost ? 'goBack' : options.rcLostBehaviour);
+	appendWpmlElement(missionConfig, 'takeOffSecurityHeight', options.takeOffSecurityHeight);
 	const takeoff = toExportWaypoint(options.takeoffPosition);
 	appendWpmlElement(missionConfig, 'takeOffRefPoint', `${formatNumber(takeoff.latitude)},${formatNumber(takeoff.longitude)},${formatNumber(takeoff.height)}`);
 	// 参考起飞点离地高（AGL）；贴地起飞为 0，不能填椭球高。
 	appendWpmlElement(missionConfig, 'takeOffRefPointAGLHeight', 0);
 	appendWpmlElement(missionConfig, 'globalTransitionalSpeed', options.transitionalSpeed);
-	appendWpmlElement(missionConfig, 'globalRTHHeight', DEFAULT_RTH_HEIGHT);
+	appendWpmlElement(missionConfig, 'globalRTHHeight', options.rthHeight);
 	const droneInfo = appendWpmlElement(missionConfig, 'droneInfo');
-	appendWpmlElement(droneInfo, 'droneEnumValue', 91);
-	appendWpmlElement(droneInfo, 'droneSubEnumValue', 1);
+	appendWpmlElement(droneInfo, 'droneEnumValue', options.aircraft.droneEnumValue);
+	appendWpmlElement(droneInfo, 'droneSubEnumValue', options.aircraft.droneSubEnumValue);
 	appendWpmlElement(missionConfig, 'waylineAvoidLimitAreaMode', 0);
 	const payloadInfo = appendWpmlElement(missionConfig, 'payloadInfo');
-	appendWpmlElement(payloadInfo, 'payloadEnumValue', 81);
+	appendWpmlElement(payloadInfo, 'payloadEnumValue', options.aircraft.payloadEnumValue);
 	appendWpmlElement(payloadInfo, 'payloadSubEnumValue', 0);
 	appendWpmlElement(payloadInfo, 'payloadPositionIndex', PAYLOAD_POSITION_INDEX);
 }
@@ -645,7 +662,7 @@ function serializeXml(xmlDocument: XMLDocument): string {
  */
 function formatNumber(value: number): string {
 	if (!Number.isFinite(value)) {
-		throw new Error('KMZ 中存在无效数值');
+		throw new Error('Die KMZ-Datei enthält ungültige Zahlenwerte');
 	}
 	return Number(value.toFixed(8)).toString();
 }

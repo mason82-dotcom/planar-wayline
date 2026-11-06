@@ -1,198 +1,155 @@
-# 面状航线（Planar Wayline）
+# Flächenrouten-Planer (Planar Wayline)
 
-纯前端、可独立部署的**大疆面状航线规划**工具。在浏览器中绘制测区、生成正射 / 五向倾斜航线，并导出符合 **DJI WPMZ（WPML）** 规范的 KMZ，可直接导入 **司空 2（DJI FlightHub 2）** 及大疆行业无人机执行。
+Ein reines Web-Frontend zum Planen von **DJI-Flächenrouten** (Kartierung). Im Browser zeichnest du ein Messgebiet, erzeugst eine Nadir-Route (Orthofoto) oder eine Schrägaufnahme mit fünf Blickrichtungen und exportierst sie als KMZ nach dem **DJI-WPML-Standard**. Die Datei lässt sich in **DJI FlightHub 2** und **DJI Pilot 2** importieren und auf DJI-Enterprise-Drohnen ausführen.
 
-无后端、无账号体系；航线保存为本地下载 KMZ。
+Es gibt kein Backend und keine Benutzerkonten: Routen werden als KMZ-Datei heruntergeladen.
 
 <p align="center">
-  <img src="docs/images/ortho-route.png" alt="正射面状航线规划界面" width="900" />
+  <img src="docs/images/ortho-route.png" alt="Planung einer Nadir-Flächenroute" width="900" />
 </p>
 
 <p align="center">
-  <em>复杂测区自动生成弓字形扫描航线，支持重叠率、航高、航速等测绘参数调节</em>
+  <em>Für beliebig geformte Messgebiete entsteht automatisch eine mäanderförmige Route; Überlappung, Flughöhe und Geschwindigkeit sind einstellbar.</em>
 </p>
 
 ---
 
-## 为什么适合司空 2 / 大疆无人机
+## Was die App kann
 
+| Funktion | Beschreibung |
+| --- | --- |
+| **WPML-Export** | Standard-KMZ mit `template.kml` und `waylines.wpml`, kompatibel zum Routenformat von FlightHub 2 und Pilot 2 |
+| **KMZ-Import** | Flächenrouten aus FlightHub/Pilot (`mapping2d`, `mapping3d`) laden: Messgebiet, Wegpunkte und Parameter werden übernommen |
+| **Höhenbezug** | Über Meer (ASL, EGM96), über Startpunkt (ALT) und über Gelände (AGL, Geländefolge) |
+| **Kurven** | Export als Polylinie; die Drohne glättet die Kurven selbst (`coordinateTurn`) |
+| **Überlappung und Tempo** | Quer- und Längsüberlappung, empfohlene Höchstgeschwindigkeit und minimales Fotointervall wie in FlightHub |
 
-| 能力                 | 说明                                                               |
-| ------------------ | ---------------------------------------------------------------- |
-| **WPMZ / WPML 导出** | 生成 `template.kml` + `waylines.wpml` 的标准 KMZ，与司空 2、Pilot 2 航线格式对齐 |
-| **KMZ 双向互通**       | 可导入司空 / 大疆导出的面状航线 KMZ，回填测区、航点与参数                                 |
-| **高度模式对齐**         | 海拔（ASL）、相对起飞点（ALT）、相对地形（仿地 / AGL）三种模式，仿地按司空建图语义导出                |
-| **转弯与执行语义**        | 导出使用折线航点，转弯由司空 `coordinateTurn` 平滑过点，避免与机端执行不一致                  |
-| **重叠与限速**          | 旁向 / 航向重叠率、建议限速与最短拍照间隔逻辑贴近司空建图航线                                 |
+**Fluggeräte:** Matrice 4T (Vorgabe), 4E, 4TD, 4D, Matrice 3TD, 3D, Mavic 3E, 3T, 3M, 3TA, Matrice 30 und 30T. Die Auswahl bestimmt den Bildwinkel der Weitwinkelkamera (Linien- und Fotoabstand) und die Gerätekennung im Export (`droneEnumValue`, `droneSubEnumValue`, `payloadEnumValue` laut DJI Cloud API). Beim Import wird das Fluggerät aus der Datei übernommen; innerhalb einer Gerätefamilie entscheidet wie in Pilot 2 die Kamera.
 
-
-支持的机型系列（规划侧可选）：**经纬 M30 系列**、**Mavic 3 行业系列**、**Matrice 3D 系列**、**Matrice 4 行业系列**、**Matrice 4D 系列**。
-
-> 导出的 KMZ 可上传至司空 2 航线库，或拷贝至遥控器 / Pilot 侧执行。具体机型与载荷能力以大疆官方与机端固件为准。
+**Sicherheit:** Verhalten bei Verbindungsverlust (Vorgabe: Rückkehr zum Startpunkt), Aktion nach dem letzten Wegpunkt, Sicherheitshöhe nach dem Start und Rückkehrhöhe sind einstellbar, werden aus importierten Dateien übernommen und im Browser gespeichert.
 
 ---
 
+## Funktionen im Überblick
 
+### Messgebiet und Route
 
-## 功能一览
+- **Freies Messgebiet:** In der 3D-Karte (CesiumJS) Eckpunkte setzen, mit Rechtsklick abschließen. Auch unregelmäßige Formen sind möglich.
+- **Automatische Mäanderroute:** Linienabstand und Fotoabstand ergeben sich aus Ausrichtung, Flughöhe und Überlappung.
+- **Nadir (Orthofoto):** eine Route mit senkrecht nach unten gerichteter Kamera, für Orthofotos und 2D-Karten.
+- **Schräg (5 Richtungen):** fünf Routen für 3D-Modelle; Länge, Flugzeit und Fotoanzahl je Route sind einzeln einsehbar.
+- **Ausrichtung der Fluglinien:** 0° bis 179°, die Route wird sofort neu berechnet.
+- **Überschneidungsprüfung:** Ein Messgebiet, das sich selbst schneidet, wird erkannt und gemeldet.
 
-
-
-### 测区与航线生成
-
-- **自由多边形测区**：在 Cesium 三维地球上点击绘制测区，支持不规则、复杂边界（非矩形）
-- **自动弓字形扫描**：按主航线角度、航高、重叠率自动计算航线间距与拍照间距
-- **正射采集**：单组下视航线，适合正射影像与二维建图
-- **五向倾斜采集**：生成五组倾斜摄影航线，可在地图上切换查看各组长度、预计时间与照片数
-- **主航线角度**：0°～179° 可调，实时重算覆盖路径
-- **交叉面检测**：测区自相交时提示无法生成航线
-
-
-
-### 高度与仿地
+### Höhe und Geländefolge
 
 <p align="center">
-  <img src="docs/images/terrain-follow.png" alt="相对地形高度（仿地）模式" width="900" />
+  <img src="docs/images/terrain-follow.png" alt="Höhenbezug über Gelände (Geländefolge)" width="900" />
 </p>
 
-<p align="center">
-  <em>相对地形高度（AGL）：结合世界地形采样，航点相对地表保持设定高度</em>
-</p>
+- **Über Meer (ASL):** Alle Wegpunkte liegen auf derselben Höhe über dem Meeresspiegel (EGM96).
+- **Über Startpunkt (ALT):** Alle Wegpunkte liegen auf derselben Höhe über dem Referenz-Startpunkt. Beim Flug zählt der tatsächliche Startpunkt der Drohne.
+- **Über Gelände (AGL):** Die Wegpunkte folgen dem Geländemodell und halten überall denselben Bodenabstand, geeignet für Hügel und Weinberge.
+- Flughöhe von etwa **2 m bis 1500 m**, in Schritten oder per Direkteingabe.
 
-- **海拔高度（ASL）**：航点相对海平面高度不变
-- **相对起飞点高度（ALT）**：需设置参考起飞点；执行时以飞机真实起飞点为准
-- **相对地形高度（AGL / 仿地）**：按地形采样抬升航点，适配山地、梯田等起伏测区
-- 航高范围约 **2 m～1500 m**，支持步进与直接输入
+### Flug- und Fotoparameter
 
+- **Routengeschwindigkeit** 1 bis 15 m/s, mit Empfehlung aus dem Fotoabstand
+- **Anfluggeschwindigkeit** zum ersten Wegpunkt, separat einstellbar
+- **Referenz-Startpunkt** per Klick in die Karte, für den Modus „Über Startpunkt“ und die Vorschau des Anflugs
+- **Quer- und Längsüberlappung** 10 % bis 90 %, bestimmen Linien- und Fotoabstand
+- **Auslösung** nach Zeitintervall (abgestimmt auf Geschwindigkeit und Fotoabstand)
+- **Gimbal-Neigung** für Schrägaufnahmen von etwa -85° bis -40°
+- **Live-Statistik:** Fläche, Routenlänge, Flugzeit und Fotoanzahl
 
+### Import und Export
 
-### 飞行与拍照参数
-
-- **全局航线速度**：1～15 m/s，并给出基于航向间距的建议限速（与司空限速习惯一致）
-- **起飞 / 过渡速度**：独立可调
-- **参考起飞点**：地图点选，用于 ALT 模式与航线预览中的过渡段
-- **旁向重叠率 / 航向重叠率**：10%～90%，驱动航线间距与拍照间距
-- **拍照触发**：等时间拍照（间隔与航速、航向间距联动）
-- **倾斜云台俯仰角**：倾斜模式下可调（约 -85°～-40°）
-- **实时统计**：测区面积、航线总长、预计飞行时间、照片数量
-
-
-
-### 导入 / 导出
-
-- **导出航线**：输入名称后本地下载 `.kmz`（DJI WPMZ）
-- **导入航线**：选择 `.kmz` 还原测区、航线与面板参数（高度模式、速度、重叠率等）
-- 纯静态站点即可使用，无需服务端存储
-
-
-
-### 三维地图
-
-- 基于 **CesiumJS** 的三维地球与世界地形
-- 测区边长标注、航线预览、起飞点与航线起点可视化
-- 不依赖外部宿主地图注入，开箱即用
+- **Route speichern:** Namen eingeben, die KMZ-Datei (DJI WPMZ) wird heruntergeladen.
+- **Route importieren:** Eine KMZ-Datei stellt Messgebiet, Route und Einstellungen wieder her.
 
 ---
 
+## Karten- und Geländedaten
 
+Ohne weitere Einrichtung nutzt die App **freie Quellen ohne API-Schlüssel**:
 
-## 技术栈
+| Zweck | Quelle |
+| --- | --- |
+| Luftbild weltweit | Esri World Imagery |
+| Luftbild regional (optional) | beliebiger WMS-Dienst, z. B. **LGL Baden-Württemberg DOP20** (20 cm, Lizenz dl-de/by-2-0) |
+| Geländemodell | **Mapterhorn** (Terrarium-Kacheln, in Europa hochauflösend) |
 
-- Vue 3 + TypeScript + Vite
-- CesiumJS（影像 + 世界地形）
-- Element Plus
-- Turf.js（测区几何）
-- JSZip（KMZ 打包）
+Die Geländehöhen aus Mapterhorn sind Höhen über dem Meer. Die App rechnet sie mit dem Geoidmodell **EGM96** in Ellipsoidhöhen (WGS84) um, die Cesium und der WPML-Export verwenden. In Süddeutschland macht das rund **48 m** aus. Ohne diese Umrechnung würden Routen mit Geländefolge entsprechend zu tief fliegen.
+
+Wer einen **Cesium-ion-Token** hat (kostenlos auf [ion.cesium.com](https://ion.cesium.com/)), kann ihn eintragen. Dann nutzt die App wie im Original ion-Luftbild und Cesium World Terrain.
+
+### Einstellungen (Umgebungsvariablen, zur Build-Zeit)
+
+| Variable | Bedeutung |
+| --- | --- |
+| `VITE_HOME_VIEW` | Startansicht `Länge,Breite,Höhe`, z. B. `8.585,49.153,3000` |
+| `VITE_CESIUM_TOKEN` | optionaler Cesium-ion-Token |
+| `VITE_IMAGERY_URL`, `VITE_IMAGERY_CREDIT` | weltweites Luftbild (XYZ-Vorlage), Quellenangabe |
+| `VITE_ORTHO_WMS_URL`, `VITE_ORTHO_WMS_LAYERS` | regionaler WMS-Luftbilddienst und Ebene |
+| `VITE_ORTHO_CREDIT`, `VITE_ORTHO_BOUNDS`, `VITE_ORTHO_MAX_LEVEL` | Quellenangabe, Gebiet `West,Süd,Ost,Nord`, höchste Zoomstufe |
+| `VITE_TERRAIN_URL`, `VITE_TERRAIN_ENCODING`, `VITE_TERRAIN_MAX_LEVEL` | Geländekacheln (`terrarium` oder `mapbox`) |
+| `VITE_PORT` | Port des Entwicklungsservers (Standard `5180`) |
 
 ---
 
+## Technik
 
+- Vue 3, TypeScript, Vite
+- CesiumJS (3D-Karte und Gelände)
+- Element Plus (Oberfläche, deutsche Sprachdatei)
+- Turf.js (Geometrie), JSZip (KMZ), egm96-universal (Geoid)
 
-## 快速开始
+---
 
-**环境要求：** Node.js 18+，推荐使用 [pnpm](https://pnpm.io/)。
+## Schnellstart
+
+**Voraussetzung:** Node.js 18 oder neuer.
 
 ```bash
-pnpm install
-pnpm dev
+npm ci
+npm run dev
+npm test        # Tests (Vitest): Gerätezuordnung, Export/Import, Höhen
 ```
 
-浏览器打开控制台提示的地址（默认 `http://localhost:5180`）。
+Dann die angezeigte Adresse öffnen, standardmäßig `http://localhost:5180`.
 
-### 环境变量
-
-复制并编辑 `.env.env.local`（或按需新建本地 env）：
-
-
-| 变量                  | 说明                                     |
-| ------------------- | -------------------------------------- |
-| `VITE_CESIUM_TOKEN` | Cesium Ion Token，用于默认影像与世界地形（仿地能力依赖地形） |
-| `VITE_PORT`         | 开发端口，默认 `5180`                         |
-
-
-未配置 Token 时，地图 / 地形可能无法正常加载。可在 [Cesium Ion](https://ion.cesium.com/) 免费申请。
-
----
-
-
-
-## 构建部署
+## Build und Betrieb
 
 ```bash
-pnpm build
-# 或生产模式
-pnpm build:prod
+npm run build:prod
 ```
 
-产物在 `dist/`。Vite 使用相对路径 `base: './'`，可直接放到 Nginx、OSS 或任意静态托管。
+Das Ergebnis liegt in `dist/`. Vite verwendet relative Pfade (`base: './'`), die Dateien lassen sich daher mit jedem Webserver ausliefern (nginx, Caddy, Objektspeicher).
 
 ---
 
+## Typischer Ablauf mit FlightHub 2 / Pilot 2
 
+1. Messgebiet zeichnen, Nadir oder Schräg wählen, Höhenbezug festlegen (im Gelände mit Höhenunterschieden **Über Gelände**).
+2. Überlappung, Ausrichtung und Geschwindigkeit einstellen; Fläche, Länge und Fotoanzahl prüfen.
+3. **Route speichern** und die KMZ-Datei herunterladen.
+4. KMZ in FlightHub 2 importieren oder auf die Fernsteuerung (Pilot 2) übertragen.
+5. Route vor dem Flug in Pilot 2 prüfen und ausführen.
 
-## 典型工作流（对接司空 2）
-
-1. 在本工具中绘制测区，选择正射或倾斜，设置航高模式（山地优先选**相对地形高度**）
-2. 调整重叠率、主航线角度与航速，确认面积 / 航程 / 照片数
-3. 点击**保存航线**，下载 KMZ
-4. 将 KMZ 导入 **司空 2** 航线库，或同步至遥控器 / Pilot 2
-5. 在大疆无人机上执行建图任务
-
-反向流程：从司空导出 KMZ → 本工具**导入航线** → 继续编辑后再导出。
+Umgekehrt geht es ebenso: KMZ aus FlightHub exportieren, hier **Route importieren**, bearbeiten und wieder speichern.
 
 ---
 
+## Grenzen
 
-
-## 目录说明
-
-```
-planar-wayline/
-├── docs/images/                 # README 截图
-├── public/
-├── src/
-│   ├── views/components/airlineEdit/
-│   │   ├── PlanarRoute.vue      # 面状航线主界面
-│   │   ├── wpml/                # WPML 动作与常量
-│   │   ├── utils/planarKmzExport.ts  # DJI WPMZ KMZ 导出
-│   │   └── composables/useKmzImport.ts
-│   ├── utils/CesiumMap.ts       # Cesium Viewer 初始化
-│   └── ...
-├── .env.env.local
-├── package.json
-└── README.md
-```
+- Reines Frontend: keine Routenbibliothek, keine Konten, keine Server-Schnittstelle.
+- Der Referenz-Startpunkt dient nur der Planung; im Flug zählt der tatsächliche Startpunkt.
+- Die Geländefolge ist nur so genau wie das Geländemodell. Bäume und Gebäude sind darin **nicht** enthalten. Sicherheitsabstände in Pilot 2 bzw. vor Ort prüfen.
+- Infrarot-Aufnahmen werden noch nicht unterstützt.
+- Liegt die Route weniger als 30 m über dem höchsten Geländepunkt, weist die App auf Hindernisse hin.
 
 ---
 
+## Lizenz
 
-
-## 说明与边界
-
-- 本仓库为**独立前端工程**：不包含航线库云同步、账号权限与后端 API
-- 「参考起飞点」仅用于规划预览；机端执行以飞机真实起飞点为准（与司空提示一致）
-- 仿地依赖 Cesium 世界地形精度；复杂地形建议在司空 / 机端再核对安全高度
-- 红外拍照等部分 UI 能力可能仍为占位，以当前可导出、可执行为准
-
----
-
+MIT, siehe [LICENSE](LICENSE).
