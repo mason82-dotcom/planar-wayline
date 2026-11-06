@@ -7,7 +7,6 @@ import * as Cesium from 'cesium';
 import { ElMessage, type UploadFile } from 'element-plus';
 import Subscriber from '@cesium-extends/subscriber';
 import BaseInstance from '@/utils/BaseInstance';
-import AircraftSelect from './components/AircraftSelect.vue';
 import CesiumMap from './components/CesiumMap.vue';
 import SaveAirlineDialog from './components/SaveAirlineDialog.vue';
 import PlanarRouteConfigPanel from './components/PlanarRouteConfigPanel.vue';
@@ -80,7 +79,7 @@ const propDefine = {
 // 三、组件信息定义
 export default defineComponent({
 	name: '',
-	components: { AircraftSelect, CesiumMap, SaveAirlineDialog, PlanarRouteConfigPanel },
+	components: { CesiumMap, SaveAirlineDialog, PlanarRouteConfigPanel },
 	emits: [''],
 	props: propDefine,
 	setup(props, ctx) {
@@ -96,7 +95,6 @@ export class Instance extends BaseInstance {
 	// 全局属性
 	globeConfig = globeConfig;
 	flyPointStatus = ref(false);
-	isAircraftSelectShow = ref(false);
 	isCalculating = ref(false);
 	hasRoute = ref(false);
 	activeRouteIndex = ref(0);
@@ -660,6 +658,10 @@ export class Instance extends BaseInstance {
 				if (!Number.isFinite(heightResult.absoluteFlightHeight) || heightResult.absoluteFlightHeight! <= maximumRouteTerrainHeight) {
 					throw new Error('Das Gelände unter der Route ist zu hoch – mit dieser Flughöhe ist keine sichere Planung möglich');
 				}
+				// Abstand über dem höchsten Geländepunkt entlang der tatsächlichen Route (inkl. Anflug).
+				globeConfig.minGroundClearance = heightResult.absoluteFlightHeight! - maximumRouteTerrainHeight;
+			} else {
+				globeConfig.minGroundClearance = Number(globeConfig.lineHeight);
 			}
 
 			const plannedRoutes: PlannedRouteData[] = [];

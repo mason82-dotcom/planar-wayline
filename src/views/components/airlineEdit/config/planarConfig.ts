@@ -15,6 +15,11 @@ export const MINIMUM_PHOTO_INTERVAL_SECONDS = 1.72;
 
 /** 航线速度 UI/规划硬上限（m/s） */
 export const PLANAR_SPEED_HARD_MAX = 15;
+/**
+ * Unter diesem Abstand zum Gelände (m) weist die App auf Hindernisse hin: Das Geländemodell
+ * enthält weder Bäume noch Gebäude oder Masten.
+ */
+export const OBSTACLE_CLEARANCE_HINT_METERS = 30;
 
 export interface PlanarConfig {
 	isSetTakeoffPoint: boolean;
@@ -36,6 +41,8 @@ export interface PlanarConfig {
 	lineLength: number;
 	takeoffClimbLength: number;
 	flyTime: string;
+	/** Kleinster geplanter Abstand der Route zum Gelände in m (null: noch nicht berechnet). */
+	minGroundClearance: number | null;
 	photoCount: number;
 	linesArrs: number[];
 	routeLinesArrs: number[][];
@@ -68,6 +75,7 @@ const defaultConfig: PlanarConfig = {
 	lineLength: 0, // 航线长度
 	takeoffClimbLength: 0, // 起飞点垂直爬升总长度
 	flyTime: '0', // 航线时间
+	minGroundClearance: null,
 	photoCount: 0, // 照片总数
 	linesArrs: [], // 航线
 	routeLinesArrs: [], // 分组航线

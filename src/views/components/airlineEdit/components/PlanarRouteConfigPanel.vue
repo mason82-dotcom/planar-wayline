@@ -99,7 +99,7 @@
 						<div>Kamera</div>
 						<div class="button-box">
 							<el-button type="primary" round class="btn-item">Weitwinkel</el-button>
-							<el-button round disabled>Infrarot</el-button>
+							<el-button round disabled title="Infrarot-Aufnahmen werden noch nicht unterstützt">Infrarot</el-button>
 						</div>
 					</div>
 
@@ -140,6 +140,7 @@
 									<el-button :disabled="globeConfig.lineHeight <= 2" color="#3c3c3c" class="height-step-btn" @click="calclineHeight(-100)">-100</el-button>
 								</div>
 							</div>
+							<div v-if="clearanceHint" class="setting-warning">{{ clearanceHint }}</div>
 						</div>
 						<template #content>
 							<p v-if="globeConfig.heightType == 1">Höhe über Meer (ASL, EGM96): Alle Wegpunkte liegen auf derselben Höhe über dem Meeresspiegel.</p>

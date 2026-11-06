@@ -3,7 +3,7 @@
  * 日    期：2026/07/29
  */
 import { computed, defineComponent, ExtractPropTypes, nextTick, onMounted, onUnmounted, PropType, ref, SetupContext, watchEffect } from 'vue';
-import globeConfig, { PLANAR_EDIT_DEFAULTS, PLANAR_SPEED_HARD_MAX } from '../config/planarConfig';
+import globeConfig, { OBSTACLE_CLEARANCE_HINT_METERS, PLANAR_EDIT_DEFAULTS, PLANAR_SPEED_HARD_MAX } from '../config/planarConfig';
 import BaseInstance from '@/utils/BaseInstance';
 import {
 	AIRCRAFT_PROFILES,
@@ -111,6 +111,15 @@ export class Instance extends BaseInstance {
 	finishActionOptions = FINISH_ACTION_OPTIONS;
 	takeOffSecurityHeightRange = TAKEOFF_SECURITY_HEIGHT_RANGE;
 	rthHeightRange = RTH_HEIGHT_RANGE;
+
+	/** Hinweis, wenn die Route nah über dem Gelände liegt (Bäume, Gebäude, Masten fehlen im Geländemodell). */
+	clearanceHint = computed(() => {
+		const clearance = globeConfig.minGroundClearance;
+		if (clearance === null || !(Number(globeConfig.lineLength) > 0) || clearance >= OBSTACLE_CLEARANCE_HINT_METERS) {
+			return '';
+		}
+		return `Nur ${Math.round(clearance)} m über dem höchsten Geländepunkt der Route – Bäume, Gebäude und Masten sind im Geländemodell nicht enthalten.`;
+	});
 
 	/** Bildwinkel des gewählten Fluggeräts als kurzer Hinweis unter der Auswahl. */
 	selectedCameraHint = computed(() => {

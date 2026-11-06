@@ -76,7 +76,6 @@
 			</div>
 		</div>
 	</div>
-	<AircraftSelect v-if="isAircraftSelectShow" v-model="isAircraftSelectShow"></AircraftSelect>
 	<SaveAirlineDialog
 		v-model="showSaveDialog"
 		:default-name="saveDialogDefaultName"

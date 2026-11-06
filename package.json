@@ -7,7 +7,8 @@
 		"dev": "vite --mode env.local",
 		"build": "vue-tsc --noEmit && vite build --mode env.local",
 		"build:prod": "vue-tsc --noEmit && vite build --mode production",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@cesium-extends/subscriber": "^1.1.1",
@@ -22,17 +23,18 @@
 		"mitt": "^3.0.1",
 		"sass": "^1.69.5",
 		"vite-plugin-cesium": "^1.2.23",
-		"vite-plugin-svg-icons": "^2.0.1",
 		"vue": "^3.5.13",
 		"vue-router": "^4.5.0"
 	},
 	"devDependencies": {
 		"@vitejs/plugin-vue": "^5.2.1",
 		"@vue/tsconfig": "^0.7.0",
+		"happy-dom": "^21.0.4",
 		"typescript": "~5.7.2",
-		"unplugin-auto-import": "^0.16.7",
-		"unplugin-vue-components": "^0.25.2",
-		"vite": "5.1.4",
-		"vue-tsc": "^2.2.4"
+		"unplugin-auto-import": "^21.1.0",
+		"unplugin-vue-components": "^32.1.0",
+		"vite": "^6.4.5",
+		"vitest": "^5.1.0",
+		"vue-tsc": "^3.3.14"
 	}
 }

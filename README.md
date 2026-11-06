@@ -111,8 +111,9 @@ Wer einen **Cesium-ion-Token** hat (kostenlos auf [ion.cesium.com](https://ion.c
 **Voraussetzung:** Node.js 18 oder neuer.
 
 ```bash
-npm install
+npm ci
 npm run dev
+npm test        # Tests (Vitest): Gerätezuordnung, Export/Import, Höhen
 ```
 
 Dann die angezeigte Adresse öffnen, standardmäßig `http://localhost:5180`.
@@ -144,7 +145,8 @@ Umgekehrt geht es ebenso: KMZ aus FlightHub exportieren, hier **Route importiere
 - Reines Frontend: keine Routenbibliothek, keine Konten, keine Server-Schnittstelle.
 - Der Referenz-Startpunkt dient nur der Planung; im Flug zählt der tatsächliche Startpunkt.
 - Die Geländefolge ist nur so genau wie das Geländemodell. Bäume und Gebäude sind darin **nicht** enthalten. Sicherheitsabstände in Pilot 2 bzw. vor Ort prüfen.
-- Infrarot und weitere Kameraoptionen sind teilweise nur Platzhalter.
+- Infrarot-Aufnahmen werden noch nicht unterstützt.
+- Liegt die Route weniger als 30 m über dem höchsten Geländepunkt, weist die App auf Hindernisse hin.
 
 ---
 
