@@ -310,17 +310,25 @@
 	display: flex;
 	flex-direction: column;
 }
+/* Narrow screens: panel spans the width above the map (see PlanarRoute.vue) */
+@media (max-width: 900px) {
+	.config-box {
+		width: 100%;
+		height: auto;
+		max-height: 55vh;
+	}
+}
 
 .wayline-title__name {
-	color: #fff;
+	color: var(--pw-text);
 	padding: 16px;
 	font-size: 16px;
 	line-height: 24px;
 }
 
 .wayline-title__param {
-	border-top: 1px solid rgba(255, 255, 255, 0.15);
-	border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+	border-top: 1px solid var(--pw-border);
+	border-bottom: 1px solid var(--pw-border);
 	display: flex;
 	position: relative;
 }
@@ -333,11 +341,11 @@
 	height: 48px;
 	margin: 8px 0;
 	display: flex;
-	border-left: 1px solid rgba(255, 255, 255, 0.1);
+	border-left: 1px solid var(--pw-border);
 }
 
 .param-value {
-	color: #fff;
+	color: var(--pw-text);
 	letter-spacing: 0;
 	margin-top: 2px;
 	font-size: 14px;
@@ -370,8 +378,8 @@
 }
 
 .base-box {
-	background-color: #232323;
-	color: #fff;
+	background-color: var(--pw-panel);
+	color: var(--pw-text);
 	border-radius: 8px;
 	padding: 16px;
 	position: relative;
@@ -384,24 +392,24 @@
 }
 
 .takeoff-action {
-	color: #2d8cf0;
+	color: var(--pw-accent);
 	margin-left: 5px;
 }
 
 .takeoff-tip {
-	color: #fff;
+	color: var(--pw-text);
 	margin-left: 5px;
 }
 
 .setting-hint {
 	margin-top: 6px;
 	font-size: 12px;
-	color: #a0a0a0;
+	color: var(--pw-muted);
 }
 .setting-warning {
 	margin-top: 6px;
 	font-size: 12px;
-	color: #f0a020;
+	color: var(--pw-warn);
 }
 .setting-number {
 	width: 140px;
@@ -413,7 +421,7 @@
 .noSetTakeoffPoint {
 	cursor: pointer;
 	height: 52px;
-	background: #2d8cf0;
+	background: var(--pw-accent);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -421,7 +429,7 @@
 }
 
 .noSetTakeoffPoint:hover {
-	background: #5cadff;
+	background: var(--pw-accent-hover);
 }
 
 .setTakeoffPoint {
@@ -436,7 +444,7 @@
 
 .half-btn {
 	width: 50%;
-	color: #fff;
+	color: var(--pw-text);
 }
 
 .height-type-group {
@@ -446,7 +454,7 @@
 
 .third-btn {
 	width: 33%;
-	color: #fff;
+	color: var(--pw-text);
 }
 
 .flyset-box {
@@ -475,7 +483,7 @@
 }
 
 .height-step-btn {
-	color: #fff;
+	color: var(--pw-text);
 	width: 50px;
 	height: 20px;
 }
@@ -493,7 +501,7 @@
 	display: inline-block;
 	text-align: center;
 	width: 50px;
-	color: #2d8cf0;
+	color: var(--pw-accent);
 	font-weight: bold;
 	font-size: 20px;
 }
@@ -506,12 +514,12 @@
 	padding: 16px 18px;
 
 	:deep(.el-slider__runway) {
-		background: #5f5f5f !important;
+		background: var(--pw-border-strong) !important;
 		height: 4px !important;
 	}
 
 	:deep(.el-slider__bar) {
-		background: #2d8cf0 !important;
+		background: var(--pw-accent) !important;
 		height: 4px !important;
 	}
 
@@ -537,7 +545,7 @@
 }
 
 .gimbal-pitch-num {
-	color: #2d8cf0;
+	color: var(--pw-accent);
 	font-weight: bold;
 	font-size: 20px;
 	line-height: 1;
@@ -554,7 +562,7 @@
 	flex: 0 0 32px;
 	width: 32px;
 	height: 32px;
-	color: #fff;
+	color: var(--pw-text);
 }
 
 .gimbal-pitch-slider {
@@ -570,7 +578,7 @@
 }
 
 .flight-speed-btn {
-	color: #fff;
+	color: var(--pw-text);
 	width: 32px;
 	height: 32px;
 }
@@ -607,7 +615,7 @@
 		border: none !important;
 	}
 	:deep(.el-collapse-item__header) {
-		color: #fff !important;
+		color: var(--pw-text) !important;
 		background: transparent !important;
 		border: none !important;
 	}
@@ -616,7 +624,7 @@
 		background: transparent !important;
 	}
 	:deep(.el-collapse-item__content) {
-		color: #fff !important;
+		color: var(--pw-text) !important;
 		padding-bottom: 16px;
 	}
 }
@@ -633,7 +641,7 @@
 	margin-bottom: 16px;
 
 	:deep(.el-select__wrapper) {
-		background: #333 !important;
+		background: var(--pw-input) !important;
 		box-shadow: none !important;
 		border: none !important;
 		border-radius: 2px;
@@ -645,16 +653,16 @@
 	:deep(.el-select__wrapper.is-focused) {
 		box-shadow: none !important;
 		border: none !important;
-		background: #333 !important;
+		background: var(--pw-input) !important;
 	}
 
 	:deep(.el-select__selected-item) {
-		color: #fff;
+		color: var(--pw-text);
 		font-size: 14px;
 	}
 
 	:deep(.el-select__caret) {
-		color: #fff;
+		color: var(--pw-text);
 	}
 }
 
@@ -667,7 +675,7 @@
 }
 
 .speed-btn {
-	color: #fff;
+	color: var(--pw-text);
 	width: 32px;
 	height: 32px;
 }
@@ -695,7 +703,7 @@
 }
 
 .overlap-btn {
-	color: #fff;
+	color: var(--pw-text);
 	width: 40px;
 	height: 28px;
 	padding: 0;
@@ -737,7 +745,7 @@
 }
 
 .planar-route-select-popper.el-popper {
-	background: #1a1a1a !important;
+	background: var(--pw-panel) !important;
 	border: none !important;
 	box-shadow: none !important;
 	padding: 0 !important;
@@ -756,9 +764,9 @@
 		line-height: 36px;
 		padding: 0 12px;
 		font-size: 14px;
-		color: #fff !important;
-		background: #333 !important;
-		border-bottom: 1px solid #1a1a1a;
+		color: var(--pw-text) !important;
+		background: var(--pw-input) !important;
+		border-bottom: 1px solid var(--pw-border);
 
 		&:last-child {
 			border-bottom: none;
@@ -767,13 +775,13 @@
 
 	.el-select-dropdown__item.is-hovering,
 	.el-select-dropdown__item:hover {
-		background: #40566b !important;
-		color: #fff !important;
+		background: var(--pw-hover) !important;
+		color: var(--pw-text) !important;
 	}
 
 	.el-select-dropdown__item.is-selected {
-		background: #40566b !important;
-		color: #2e86de !important;
+		background: var(--pw-hover) !important;
+		color: var(--pw-accent) !important;
 		font-weight: 400;
 	}
 }

@@ -53,8 +53,8 @@
 
 .airline-save-dialog.el-dialog {
 	overflow: visible;
-	background: #282828;
-	border: 1px solid #4f4f4f;
+	background: var(--pw-panel);
+	border: 1px solid var(--pw-border);
 	border-radius: 8px;
 	.el-dialog__header {
 		position: relative;
@@ -63,17 +63,17 @@
 		margin-right: 0;
 	}
 	.el-dialog__title {
-		color: #fff;
+		color: var(--pw-text);
 		font-size: 16px;
 	}
 	.el-dialog__headerbtn .el-dialog__close {
-		color: #c0c4cc;
+		color: var(--pw-muted);
 	}
 	.el-dialog__body {
 		position: relative;
 		z-index: 2;
 		padding: 12px 20px 8px;
-		color: #fff;
+		color: var(--pw-text);
 		overflow: visible;
 	}
 	.el-dialog__footer {
@@ -95,7 +95,7 @@
 	}
 
 	.el-form-item__label {
-		color: #fff;
+		color: var(--pw-text);
 		font-size: 13px;
 		line-height: 1.4;
 		margin-bottom: 6px !important;
@@ -107,19 +107,19 @@
 	}
 
 	.el-input__wrapper {
-		background: #1f1f1f !important;
-		box-shadow: 0 0 0 1px #4f4f4f inset !important;
+		background: var(--pw-input) !important;
+		box-shadow: 0 0 0 1px var(--pw-border-strong) inset !important;
 		border-radius: 6px;
 	}
 
 	.el-input__inner {
-		color: #fff;
+		color: var(--pw-text);
 	}
 }
 
 .airline-save-hint {
 	font-size: 12px;
 	line-height: 1.5;
-	color: rgba(255, 255, 255, 0.55);
+	color: var(--pw-muted);
 }
 </style>

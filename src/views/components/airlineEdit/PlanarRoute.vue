@@ -25,6 +25,9 @@
 			<div class="wayline-edit-header-right" v-if="geozonesAvailable">
 				<el-checkbox v-model="geozonesVisible" class="geozone-toggle" title="Amtliche UAS-Geozonen (DIPUL) – Planungshilfe, keine Fluggenehmigung">UAS-Geozonen</el-checkbox>
 			</div>
+			<div class="wayline-edit-header-theme">
+				<el-checkbox v-model="darkTheme" title="Dunkles Farbschema (Standard: hell wie FlightHub Keyless)">Dunkel</el-checkbox>
+			</div>
 		</div>
 
 		<div class="planar-content">
@@ -90,13 +93,20 @@
 <script lang="ts" src="./PlanarRoute.ts"></script>
 
 <style scoped lang="scss">
+.wayline-edit-header-theme {
+	display: flex;
+	align-items: center;
+	:deep(.el-checkbox__label) {
+		color: var(--pw-text);
+	}
+}
 .wayline-edit-header-right {
 	display: flex;
 	align-items: center;
 	margin-left: auto;
 	padding-right: 16px;
 	:deep(.el-checkbox__label) {
-		color: #e6e6e6;
+		color: var(--pw-text);
 	}
 }
 .delBtn {
@@ -214,7 +224,7 @@
 	pointer-events: auto;
 	display: flex;
 	flex-direction: column;
-	background: #232323;
+	background: var(--pw-bg);
 	position: relative;
 	user-select: none;
 	overflow-y: hidden;
@@ -229,7 +239,7 @@
 	flex: 1;
 	min-height: 0;
 	display: flex;
-	background: #101010;
+	background: var(--pw-map-bg);
 	.wayMap {
 		flex: 1;
 		position: relative;
@@ -237,16 +247,17 @@
 }
 
 .wayline-edit-header {
-	color: #fff;
+	color: var(--pw-text);
 	justify-content: space-between;
 	align-items: center;
 	width: 100%;
 	height: 54px;
 	padding: 0 20px;
 	display: flex;
-	border-bottom: 1px solid rgb(79, 79, 79);
+	border-bottom: 1px solid var(--pw-border);
 	position: relative;
-	background: #232323;
+	background: var(--pw-panel);
+	box-shadow: var(--pw-shadow);
 	flex-shrink: 0;
 	&-left {
 		display: flex;
@@ -257,19 +268,20 @@
 		height: 32px;
 		padding: 4px 8px;
 		border-radius: 4px;
-		background: #4f4f4f;
+		background: var(--pw-btn);
 		font-size: 14px;
 		display: flex;
 		align-items: center;
 		margin-left: 20px;
 	}
 	.active {
-		background: #2d8cf0;
+		background: var(--pw-accent);
+		color: #fff;
 	}
 
 	&-center {
 		height: 38px;
-		background: #3c3c3c;
+		background: var(--pw-btn);
 		cursor: pointer;
 		border-radius: 4px;
 		padding: 8px 16px;
@@ -294,6 +306,33 @@
 	}
 }
 
+/* Narrow screens (≤ 900 px): header wraps, panel above the map, map keeps a usable height */
+@media (max-width: 900px) {
+	.planarRoutePage {
+		overflow-y: auto;
+	}
+	.wayline-edit-header {
+		height: auto;
+		min-height: 54px;
+		flex-wrap: wrap;
+		gap: 8px;
+		padding: 8px 12px;
+	}
+	.wayline-edit-header-right {
+		margin-left: 0;
+		padding-right: 0;
+	}
+	.planar-content {
+		flex-direction: column;
+		flex: none;
+		.wayMap {
+			flex: none;
+			height: 60vh;
+			min-height: 320px;
+		}
+	}
+}
+
 // 起飞点鼠标样式
 .map-menu-panel {
 	cursor:
@@ -309,10 +348,14 @@
 	pointer-events: none;
 	color: #fff;
 	background-color: rgba(0, 0, 0, 0.5);
-	width: 800px;
-	height: 64px;
+	width: min(800px, calc(100% - 32px));
+	min-height: 64px;
+	padding: 12px 16px;
 	font-size: 14px;
-	line-height: 64px;
+	line-height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	position: absolute;
 	top: 144px;
 	left: 50%;
