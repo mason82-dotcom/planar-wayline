@@ -22,6 +22,9 @@
 					</el-button>
 				</el-upload>
 			</div>
+			<div class="wayline-edit-header-right" v-if="geozonesAvailable">
+				<el-checkbox v-model="geozonesVisible" class="geozone-toggle" title="Amtliche UAS-Geozonen (DIPUL) – Planungshilfe, keine Fluggenehmigung">UAS-Geozonen</el-checkbox>
+			</div>
 		</div>
 
 		<div class="planar-content">
@@ -80,12 +83,22 @@
 		v-model="showSaveDialog"
 		:default-name="saveDialogDefaultName"
 		:export-download="exportDownloadKmz"
+		:export-flight-hub="exportToFlightHub"
 	/>
 </template>
 
 <script lang="ts" src="./PlanarRoute.ts"></script>
 
 <style scoped lang="scss">
+.wayline-edit-header-right {
+	display: flex;
+	align-items: center;
+	margin-left: auto;
+	padding-right: 16px;
+	:deep(.el-checkbox__label) {
+		color: #e6e6e6;
+	}
+}
 .delBtn {
 	display: none;
 	position: absolute;

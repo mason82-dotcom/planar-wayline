@@ -64,6 +64,37 @@ export function createImageryLayers(): Cesium.ImageryLayer[] {
 	return layers;
 }
 
+/** All active layers of the DIPUL WMS (official German UAS geographical zones). */
+export const DIPUL_LAYERS = [
+	'flughaefen', 'flugplaetze', 'kontrollzonen', 'flugbeschraenkungsgebiete', 'temporaere_betriebseinschraenkungen',
+	'modellflugplaetze', 'haengegleiter', 'naturschutzgebiete', 'nationalparks', 'vogelschutzgebiete', 'ffh-gebiete',
+	'militaerische_anlagen', 'justizvollzugsanstalten', 'polizei', 'sicherheitsbehoerden', 'behoerden', 'diplomatische_vertretungen',
+	'internationale_organisationen', 'labore', 'krankenhaeuser', 'industrieanlagen', 'kraftwerke', 'umspannwerke', 'stromleitungen',
+	'windkraftanlagen', 'bundesautobahnen', 'bundesstrassen', 'bahnanlagen', 'binnenwasserstrassen', 'seewasserstrassen',
+	'schifffahrtsanlagen', 'freibaeder', 'wohngrundstuecke',
+].join(',');
+
+/**
+ * UAS geographical zones of Germany (DIPUL, © DFS/BMDV, CC BY-ND 4.0 – shown unmodified).
+ * Disabled with VITE_GEOZONES=false; a planning aid, not a flight permission.
+ */
+export function createGeozoneLayer(): Cesium.ImageryLayer | null {
+	if (env.VITE_GEOZONES === 'false') return null;
+	const layer = new Cesium.ImageryLayer(
+		new Cesium.WebMapServiceImageryProvider({
+			url: 'https://uas-betrieb.de/geoservices/dipul/wms',
+			layers: env.VITE_GEOZONES_LAYERS || DIPUL_LAYERS,
+			parameters: { format: 'image/png', transparent: true, version: '1.1.1' },
+			tilingScheme: new Cesium.WebMercatorTilingScheme(),
+			credit: 'UAS-Geozonen © DFS/BMDV (dipul.de), CC BY-ND 4.0',
+			maximumLevel: 19,
+			rectangle: Cesium.Rectangle.fromDegrees(5.8, 47.2, 15.1, 55.1),
+		}),
+		{ alpha: 0.6 }
+	);
+	return layer;
+}
+
 interface DecodedTile {
 	width: number;
 	height: number;

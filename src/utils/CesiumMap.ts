@@ -5,7 +5,7 @@
  */
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
-import { createImageryLayers, createRgbTerrainProvider } from './freeMapSources';
+import { createGeozoneLayer, createImageryLayers, createRgbTerrainProvider } from './freeMapSources';
 
 /** 默认视点 [经度, 纬度, 高度米]，可通过 VITE_HOME_VIEW="lon,lat,height" 配置（默认西安附近） */
 const DEFAULT_HOME: [number, number, number] = [108.94, 34.34, 20000];
@@ -50,6 +50,13 @@ export const initMap = (cesiumContainer: string | Element): Cesium.Viewer => {
 	});
 	for (const layer of imageryLayers.slice(1)) {
 		viewer.imageryLayers.add(layer);
+	}
+	// Geozones on top of all imagery; toggled from the header (window.geozoneLayer).
+	const geozones = createGeozoneLayer();
+	if (geozones) {
+		geozones.show = localStorage.getItem('planar.geozones') !== 'off';
+		viewer.imageryLayers.add(geozones);
+		window.geozoneLayer = geozones;
 	}
 
 	viewer.scene.globe.depthTestAgainstTerrain = true;

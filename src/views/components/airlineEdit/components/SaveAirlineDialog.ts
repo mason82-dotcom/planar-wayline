@@ -33,6 +33,14 @@ const propDefine = {
 		required: true,
 	},
 	/**
+	 * Optional: send the KMZ to FlightHub Keyless instead of downloading it.
+	 * @param name route name (trimmed)
+	 */
+	exportFlightHub: {
+		type: Function as PropType<(name: string) => Promise<void>>,
+		default: undefined,
+	},
+	/**
 	 * 输入框获焦/失焦时回调（航线编辑页用于暂停键盘飞控）
 	 * @param enabled true 恢复键盘飞控，false 暂停
 	 */
@@ -173,8 +181,13 @@ export class Instance extends BaseInstance {
 	/**
 	 * 确认保存：下载 KMZ
 	 */
-	confirmSave = async () => {
-		if (this.isSaving.value) return;
+	confirmSave = async () => this.runSave(this.props.exportDownload, 'Gespeichert');
+
+	/** Sends the route to FlightHub Keyless (button only shown when configured). */
+	confirmSend = async () => this.runSave(this.props.exportFlightHub, '');
+
+	private runSave = async (action: ((name: string) => Promise<void>) | undefined, successText: string) => {
+		if (this.isSaving.value || !action) return;
 		const valid = await this.validateForm();
 		if (!valid) return;
 		const name = this.form.name.trim();
@@ -185,12 +198,13 @@ export class Instance extends BaseInstance {
 		}
 		this.isSaving.value = true;
 		try {
-			await this.props.exportDownload?.(name);
-			ElMessage.success('Gespeichert');
+			await action(name);
+			if (successText) ElMessage.success(successText);
 			this.ctx.emit('update:modelValue', false);
 			this.ctx.emit('success', { name });
 		} catch (e) {
-			console.error('[SaveAirlineDialog] confirmSave', e);
+			console.error('[SaveAirlineDialog] save', e);
+			ElMessage.error(`Nicht gespeichert: ${e instanceof Error ? e.message : String(e)}. Bitte erneut versuchen.`);
 		} finally {
 			this.isSaving.value = false;
 		}

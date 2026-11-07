@@ -2,7 +2,7 @@
  * 功能名称：面状航线
  * 日    期：2025/06/23 14:58:19
  */
-import { computed, defineComponent, ExtractPropTypes, onUnmounted, ref, SetupContext } from 'vue';
+import { computed, defineComponent, ExtractPropTypes, onUnmounted, ref, SetupContext, watch } from 'vue';
 import * as Cesium from 'cesium';
 import { ElMessage, type UploadFile } from 'element-plus';
 import Subscriber from '@cesium-extends/subscriber';
@@ -29,6 +29,7 @@ import {
 } from './utils/planarTerrain';
 import { LineAngleHandler } from './composables/useLineAngle';
 import { KmzImportHandler, PlannedRouteData as KmzPlannedRouteData } from './composables/useKmzImport';
+import { flightHubBase, readFlightHubKmzLink, sendKmzToFlightHub } from '@/utils/flightHubLink';
 import { RouteRenderer } from './composables/useCesiumRenderer';
 import {
 	calculateRouteDuration,
@@ -108,6 +109,9 @@ export class Instance extends BaseInstance {
 	drawDataSource: Cesium.CustomDataSource | null = null;
 	isObliqueMode = computed(() => Number(globeConfig.climbType) === 2);
 	isImporting = ref(false);
+	/** DIPUL geozone overlay: available after map init, state remembered in localStorage */
+	geozonesAvailable = ref(false);
+	geozonesVisible = ref(localStorage.getItem('planar.geozones') !== 'off');
 	mapLoadingText = computed(() => (this.isImporting.value ? 'Route wird importiert …' : 'Route wird berechnet …'));
 	showSaveDialog = ref(false);
 	saveDialogDefaultName = ref('');
@@ -212,8 +216,38 @@ export class Instance extends BaseInstance {
 		this.drawDataSource.show = true;
 
 		addStartPoint(viewer, this.drawWay);
+		this.geozonesAvailable.value = !!window.geozoneLayer;
+		watch(this.geozonesVisible, (on) => {
+			localStorage.setItem('planar.geozones', on ? 'on' : 'off');
+			if (window.geozoneLayer) window.geozoneLayer.show = on;
+			window.mainViewer?.scene.requestRender();
+		});
 		viewer.scene.requestRender();
+		await this.importFromFlightHubLink();
 	};
+
+	/** FlightHub Keyless can open a route here via ?kmz=<FlightHub KMZ URL>&name=<name>. */
+	private importFromFlightHubLink = async () => {
+		const link = readFlightHubKmzLink(window.location.search);
+		if (!link) return;
+		window.history.replaceState({}, '', window.location.pathname);
+		this.recordImportedWaylineName(link.name);
+		try {
+			await this.kmzImporter.importPlanarKmzFromUrl(link.url, link.name);
+		} catch (e) {
+			ElMessage.error(`Route aus FlightHub nicht geladen: ${e instanceof Error ? e.message : String(e)}`);
+		}
+	};
+
+	/** Present only when FlightHub is configured; the save dialog then offers „An FlightHub senden“. */
+	exportToFlightHub = flightHubBase()
+		? async (name: string) => {
+				sessionStorage.setItem('aircraftName', name);
+				const blob = await this.buildCurrentWaylineKmz();
+				const sent = await sendKmzToFlightHub(blob, name);
+				ElMessage.success(`„${sent.name.replace(/\.kmz$/i, '')}“ liegt jetzt in der FlightHub-Routenbibliothek`);
+			}
+		: undefined;
 
 	/**
 	 * 注册测区删除浮层和顶点拖动交互。
