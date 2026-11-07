@@ -142,6 +142,8 @@ describe('KMZ-Export', () => {
 	it('lehnt unsinnige Sicherheitshöhen ab', async () => {
 		await expect(buildPlanarKmz(exportOptions({ takeOffSecurityHeight: 0 }))).rejects.toThrow('Sicherheitshöhe');
 		await expect(buildPlanarKmz(exportOptions({ rthHeight: 1 }))).rejects.toThrow('Rückkehrhöhe');
+		await expect(buildPlanarKmz(exportOptions({ transitionalSpeed: 16 }))).rejects.toThrow('Anfluggeschwindigkeit');
+		await expect(buildPlanarKmz(exportOptions({ transitionalSpeed: 0 }))).rejects.toThrow('Anfluggeschwindigkeit');
 	});
 });
 
