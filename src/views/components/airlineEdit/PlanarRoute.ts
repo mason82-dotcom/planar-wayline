@@ -29,6 +29,7 @@ import {
 } from './utils/planarTerrain';
 import { LineAngleHandler } from './composables/useLineAngle';
 import { KmzImportHandler, PlannedRouteData as KmzPlannedRouteData } from './composables/useKmzImport';
+import { flightHubBase, readFlightHubKmzLink, sendKmzToFlightHub } from '@/utils/flightHubLink';
 import { RouteRenderer } from './composables/useCesiumRenderer';
 import {
 	calculateRouteDuration,
@@ -213,7 +214,31 @@ export class Instance extends BaseInstance {
 
 		addStartPoint(viewer, this.drawWay);
 		viewer.scene.requestRender();
+		await this.importFromFlightHubLink();
 	};
+
+	/** FlightHub Keyless can open a route here via ?kmz=<FlightHub KMZ URL>&name=<name>. */
+	private importFromFlightHubLink = async () => {
+		const link = readFlightHubKmzLink(window.location.search);
+		if (!link) return;
+		window.history.replaceState({}, '', window.location.pathname);
+		this.recordImportedWaylineName(link.name);
+		try {
+			await this.kmzImporter.importPlanarKmzFromUrl(link.url, link.name);
+		} catch (e) {
+			ElMessage.error(`Route aus FlightHub nicht geladen: ${e instanceof Error ? e.message : String(e)}`);
+		}
+	};
+
+	/** Present only when FlightHub is configured; the save dialog then offers „An FlightHub senden“. */
+	exportToFlightHub = flightHubBase()
+		? async (name: string) => {
+				sessionStorage.setItem('aircraftName', name);
+				const blob = await this.buildCurrentWaylineKmz();
+				const sent = await sendKmzToFlightHub(blob, name);
+				ElMessage.success(`„${sent.name.replace(/\.kmz$/i, '')}“ liegt jetzt in der FlightHub-Routenbibliothek`);
+			}
+		: undefined;
 
 	/**
 	 * 注册测区删除浮层和顶点拖动交互。

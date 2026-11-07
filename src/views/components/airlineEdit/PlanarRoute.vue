@@ -80,6 +80,7 @@
 		v-model="showSaveDialog"
 		:default-name="saveDialogDefaultName"
 		:export-download="exportDownloadKmz"
+		:export-flight-hub="exportToFlightHub"
 	/>
 </template>
 

@@ -6,7 +6,7 @@
 	<el-dialog
 		:model-value="modelValue"
 		title="Route speichern"
-		width="480px"
+		:width="exportFlightHub ? '560px' : '480px'"
 		append-to-body
 		:close-on-click-modal="false"
 		:close-on-press-escape="!isSaving"
@@ -28,11 +28,14 @@
 					/>
 				</el-form-item>
 			</el-form>
-			<div class="airline-save-hint">Die Route wird unter diesem Namen als KMZ-Datei heruntergeladen.</div>
+			<div class="airline-save-hint">
+				{{ exportFlightHub ? 'Die Route als KMZ-Datei herunterladen oder direkt in die FlightHub-Routenbibliothek senden.' : 'Die Route wird unter diesem Namen als KMZ-Datei heruntergeladen.' }}
+			</div>
 		</div>
 		<template #footer>
 			<el-button class="cancel-btn" :disabled="isSaving" @click="closeDialog">Abbrechen</el-button>
-			<el-button type="primary" :loading="isSaving" @click="confirmSave">Speichern</el-button>
+			<el-button v-if="exportFlightHub" :loading="isSaving" @click="confirmSend">An FlightHub senden</el-button>
+			<el-button type="primary" :loading="isSaving" @click="confirmSave">{{ exportFlightHub ? 'KMZ herunterladen' : 'Speichern' }}</el-button>
 		</template>
 	</el-dialog>
 </template>
