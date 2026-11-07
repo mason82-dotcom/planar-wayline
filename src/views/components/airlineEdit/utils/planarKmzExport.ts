@@ -116,6 +116,10 @@ function validateExportOptions(options: PlanarKmzExportOptions): void {
 	if (!Number.isFinite(options.rthHeight) || options.rthHeight < 2 || options.rthHeight > 1500) {
 		throw new Error('Ungültige Rückkehrhöhe');
 	}
+	// DJI WPML: globalTransitionalSpeed (0, 15] m/s
+	if (!Number.isFinite(options.transitionalSpeed) || options.transitionalSpeed <= 0 || options.transitionalSpeed > 15) {
+		throw new Error('Ungültige Anfluggeschwindigkeit (DJI: über 0 bis 15 m/s)');
+	}
 	if (![1, 2, 3].includes(options.heightType)) {
 		throw new Error('Ungültiger Höhenbezug');
 	}
