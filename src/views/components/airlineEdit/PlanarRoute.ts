@@ -2,7 +2,7 @@
  * 功能名称：面状航线
  * 日    期：2025/06/23 14:58:19
  */
-import { computed, defineComponent, ExtractPropTypes, onUnmounted, ref, SetupContext } from 'vue';
+import { computed, defineComponent, ExtractPropTypes, onUnmounted, ref, SetupContext, watch } from 'vue';
 import * as Cesium from 'cesium';
 import { ElMessage, type UploadFile } from 'element-plus';
 import Subscriber from '@cesium-extends/subscriber';
@@ -109,6 +109,9 @@ export class Instance extends BaseInstance {
 	drawDataSource: Cesium.CustomDataSource | null = null;
 	isObliqueMode = computed(() => Number(globeConfig.climbType) === 2);
 	isImporting = ref(false);
+	/** DIPUL geozone overlay: available after map init, state remembered in localStorage */
+	geozonesAvailable = ref(false);
+	geozonesVisible = ref(localStorage.getItem('planar.geozones') !== 'off');
 	mapLoadingText = computed(() => (this.isImporting.value ? 'Route wird importiert …' : 'Route wird berechnet …'));
 	showSaveDialog = ref(false);
 	saveDialogDefaultName = ref('');
@@ -213,6 +216,12 @@ export class Instance extends BaseInstance {
 		this.drawDataSource.show = true;
 
 		addStartPoint(viewer, this.drawWay);
+		this.geozonesAvailable.value = !!window.geozoneLayer;
+		watch(this.geozonesVisible, (on) => {
+			localStorage.setItem('planar.geozones', on ? 'on' : 'off');
+			if (window.geozoneLayer) window.geozoneLayer.show = on;
+			window.mainViewer?.scene.requestRender();
+		});
 		viewer.scene.requestRender();
 		await this.importFromFlightHubLink();
 	};

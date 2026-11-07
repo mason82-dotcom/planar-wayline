@@ -20,6 +20,10 @@ interface ImportMetaEnv {
 	readonly VITE_CESIUM_TOKEN: string;
 	/** Optional FlightHub Keyless origin for KMZ exchange, e.g. http://192.168.178.50:3003 */
 	readonly VITE_FLIGHTHUB_URL?: string;
+	/** 'false' hides the DIPUL UAS geozone overlay */
+	readonly VITE_GEOZONES?: string;
+	/** Comma-separated DIPUL WMS layers (default: all active zones) */
+	readonly VITE_GEOZONES_LAYERS?: string;
 	readonly VITE_HOME_VIEW?: string;
 	readonly VITE_IMAGERY_URL?: string;
 	readonly VITE_IMAGERY_CREDIT?: string;

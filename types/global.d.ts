@@ -21,6 +21,8 @@ declare global {
 	interface Window {
 		viewer?: import('cesium').Viewer;
 		mainViewer?: import('cesium').Viewer;
+		/** DIPUL geozone overlay (null when disabled) */
+		geozoneLayer?: import('cesium').ImageryLayer;
 		miniViewer?: import('cesium').Viewer;
 		tdtAvailableKey?: string;
 	}
