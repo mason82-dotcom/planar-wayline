@@ -2,6 +2,7 @@
  * 功能名称：面状航线
  * 日    期：2025/06/23 14:58:19
  */
+import { darkTheme } from '@/utils/theme';
 import { computed, defineComponent, ExtractPropTypes, onUnmounted, ref, SetupContext, watch } from 'vue';
 import * as Cesium from 'cesium';
 import { ElMessage, type UploadFile } from 'element-plus';
@@ -111,6 +112,8 @@ export class Instance extends BaseInstance {
 	isImporting = ref(false);
 	/** DIPUL geozone overlay: available after map init, state remembered in localStorage */
 	geozonesAvailable = ref(false);
+	/** Farbschema (hell = Standard, wie FlightHub Keyless) */
+	darkTheme = darkTheme;
 	geozonesVisible = ref(localStorage.getItem('planar.geozones') !== 'off');
 	mapLoadingText = computed(() => (this.isImporting.value ? 'Route wird importiert …' : 'Route wird berechnet …'));
 	showSaveDialog = ref(false);
